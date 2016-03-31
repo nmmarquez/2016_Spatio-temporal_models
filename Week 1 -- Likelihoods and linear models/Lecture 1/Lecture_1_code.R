@@ -4,7 +4,7 @@ library( TMB )
 #install_github("nwfsc-assess/geostatistical_delta-GLMM")
 library( SpatialDeltaGLMM )
 
-setwd( "C:/Users/James.Thorson/Desktop/UW Hideaway/Course plan 2016 -- spatiotemporal models/Week 1 -- Likelihoods and linear models/Lecture 1" )
+setwd( "C:/Users/James.Thorson/Desktop/Project_git/2016_Spatio-temporal_models/Week 1 -- Likelihoods and linear models/Lecture 1" )
 
 ############
 # Example 1 -- average CPUE for canary rockfish
@@ -43,7 +43,7 @@ Start = c(1,1)
 NegLogLike_Fn(Par=Start, Data=Data)
 Opt = optim( par=Start, fn=NegLogLike_Fn, Data=Data, lower=c(0.01,0.01), upper=Inf, method="L-BFGS-B", hessian=TRUE )
 print( Opt$par ) # Estimated parameters
-print( diag( solve(Opt$hessian) ) ) # standard errors
+print(sqrt( diag( solve(Opt$hessian) )) ) # standard errors
 
 ###### Method 3 -- Optimize using TMB
 # Step 1 -- make and compile template file
