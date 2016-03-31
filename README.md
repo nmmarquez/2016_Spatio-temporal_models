@@ -16,3 +16,6 @@ install.packages("TMB")
 ```R
 install_github("kaskr/adcomp/TMB")
 ```
+
+### Class recordings
+* We will try to record the class and, if successful, will upload recordings to a [public folder](https://drive.google.com/folderview?id=0BwWtq3D1od8WZUl6SS1pT3BjdzQ&usp=sharing)
