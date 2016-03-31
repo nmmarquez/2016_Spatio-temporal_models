@@ -1,5 +1,5 @@
 
-setwd( "C:/Users/James.Thorson/Desktop/UW Hideaway/Course plan 2016 -- spatiotemporal models/Week 1 -- Likelihoods and linear models/Lab 1" )
+setwd( "C:/Users/James.Thorson/Desktop/Project_git/2016_Spatio-temporal_models/Week 1 -- Likelihoods and linear models/Lab 1" )
 library(TMB)
 
 ###########
@@ -89,6 +89,7 @@ contour(x=X, y=Y, z=Z, levels=seq(0,1000,by=10)^3+1)
 # Delta-model for canary rockfish
 ###########
 
+#devtools::install_github("nwfsc-assess/geostatistical_delta-GLMM")
 library( SpatialDeltaGLMM )
 
 #
@@ -120,7 +121,7 @@ Report = Obj$report()
 png( file="Canary_histogram--with_fit.png", width=4, height=4, res=200, units="in")
   par( mar=c(3,3,2,0), mgp=c(2,0.5,0), tck=-0.02)
   hist( log(1+CPUE), freq=FALSE, col=rgb(1,0,0,0.2) )
-  Sim_CPUE = rbinom(1e5, size=1, prob=Report$zero_prob) * rlnorm(1e5, meanlog=Report$linpred_i, sdlog=Report$logsd)
+  Sim_CPUE = (1-rbinom(1e5, size=1, prob=Report$zero_prob)) * rlnorm(1e5, meanlog=Report$linpred_i, sdlog=Report$logsd)
   hist( log(1+Sim_CPUE), freq=FALSE, add=TRUE, col=rgb(0,0,1,0.2) )
   legend( "topright", bty="n", legend=c("Observed","Predicted"), fill=c("red","blue"))
 dev.off()
