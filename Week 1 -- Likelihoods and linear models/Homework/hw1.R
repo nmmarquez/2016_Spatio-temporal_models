@@ -18,7 +18,7 @@ K <- 10
 Partition_i <- sample(x=1:K, size=length(y), replace=TRUE)
 
 # function for running with different distributions and kfold validation
-run_model <- function(use_gamma, use_cov){
+run_model <- function(use_gamma, use_cov, X, y){
     end_col <- ifelse(use_cov, ncol(X), 1)
     PredNLL_k = rep(NA, K)
     for(k in 1:(K+1)){
@@ -35,6 +35,7 @@ run_model <- function(use_gamma, use_cov){
         Obj <- MakeADFun( data=Data, parameters=Params, DLL="hw1")
         Opt <- nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr)
         Report <- Obj$report()
+        Report$use_gamma <- use_gamma
         if(k != (K+1)){
             PredNLL_k[k] <- Report$pred_jnll
         }
@@ -49,15 +50,17 @@ model_spec <- list(log_normal=list(use_gamma=FALSE, use_cov=FALSE),
                    log_normal_cov=list(use_gamma=FALSE, use_cov=TRUE))
 
 # run the models
-models <- lapply(model_spec, function(x) run_model(x$use_gamma, x$use_cov))
+models <- lapply(model_spec, function(x) run_model(x$use_gamma, x$use_cov, X, y))
+
+beta_normalize <- function(b){
+    ifelse(rep(length(b)==1, ncol(X)), c(b, rep(0, ncov)),b)
+}
 
 # get the info from the models
 model_nll <- lapply(models, function(x) sum(x$Report$jnll_vec))
 model_params <- lapply(models, function(x) c(x$Report$zero_prob, 
                                              x$Report$sigma,
-                                             ifelse(rep(length(x$Report$beta)==1, ncol(X)),
-                                                    c(x$Report$beta, rep(0, ncov)),
-                                                    x$Report$beta)))
+                                             beta_normalize(x$Report$beta)))
 
 log_pred_score <- lapply(models, function(x)
     mean(x$PredNLL_k / table(Partition_i)))
@@ -66,10 +69,13 @@ log_pred_score <- lapply(models, function(x)
 N <- nrow(EBS_pollock_data) # number of data points
 M <- 100 # number of simulations
 
+# simulate the covariates to use for the analysis
 simulate_covs <- function(N){
-    cbind(rep(1, N), sapply(1:ncov, function(i) rnorm(N, mean(X[,i+1]), sd(X[,i+1]))))
+    cbind(rep(1, N), sapply(1:ncov, function(i) 
+        rnorm(N, mean(X[,i+1]), sd(X[,i+1]))))
 }
 
+# based on a set of covariates and model form simulate a catch
 simulate_catch <- function(covs, use_gamma, beta, sigma, zero_prob){
     lin_pred <- covs %*% beta
     zero_catches <-rbinom(N, 1, 1-zero_prob)
@@ -82,8 +88,21 @@ simulate_catch <- function(covs, use_gamma, beta, sigma, zero_prob){
     return(catches)
 }
 
-test_cov <- simulate_covs(N)
-hist(log(simulate_catch(test_cov, F, models$log_normal_cov$Report$beta,
-               models$log_normal_cov$Report$sigma, 
-               models$log_normal_cov$Report$zero_prob) + 1))
-hist(log(y + 1))
+# M covariate simulations to use with the 3 models
+covariate_simulations <- lapply(1:M, function(x) simulate_covs(N))
+
+# run all the catch simulations
+catch_simulations <- lapply(models, function(x) sapply(1:M, function(i)
+    simulate_catch(covariate_simulations[[i]], x$Report$use_gamma, 
+                   beta_normalize(x$Report$beta), x$Report$sigma, 
+                   x$Report$zero_prob)))
+
+# no more k fold cross validation
+K <- 0
+
+# run each model on each simulation
+models <- lapply(catch_simulations, function(model_response) 
+    lapply(1:M, function(i)
+        lapply(model_spec, function(x)
+            run_model(x$use_gamma, x$use_cov, covariate_simulations[[i]], 
+                      model_response[,i]))))
