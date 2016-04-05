@@ -1,0 +1,97 @@
+# HW\#1 Generalized Linear Models with TMB  
+
+## 1. Modeling Catch Rate Data for Alaska Pollock  
+
+In our data set we have survey catch rate data for Alaska Polluck ($y$) where 
+$y \geq 0$. From this data we find that about 3% of the catches have a value of 
+zero. Taking this into consideration we want to model both the probability of a 
+zero catch as well as the distribution of catch rates when we do not have a 
+zero catch. We take three seperate approaches for modeling this data
+
+### 1. Delta Log Normal  
+$$
+\boldsymbol{\beta} = \beta_{intercept}
+$$
+$$
+\lambda_{i} = \textbf{x}_{i} \boldsymbol{\beta}
+$$
+$$
+\begin{aligned}
+    Pr(c_i)=
+    \begin{cases}
+      \theta,& \text{if } c_{i} = 0 \\
+      (1 - \theta) Lognormal(\lambda_{i}, \sigma),  & \text{otherwise}
+    \end{cases}
+  \end{aligned}
+$$
+
+### 2. Delta Gamma    
+$$
+\boldsymbol{\beta} = \beta_{intercept}
+$$
+$$
+\lambda_{i} = \textbf{x}_{i} \boldsymbol{\beta}
+$$
+$$
+\begin{aligned}
+    Pr(c_i)=
+    \begin{cases}
+      \theta,& \text{if } c_{i} = 0 \\
+      (1 - \theta) gamma(exp(\lambda_{i}), \sigma),  & \text{otherwise}
+    \end{cases}
+  \end{aligned}
+$$
+
+### 3. Delta Log Normal with covariates
+$$
+\boldsymbol{\beta} = \beta_{intercept}, \beta_{lat}, \beta_{long}
+$$
+$$
+\lambda_{i} = \textbf{x}_{i} \boldsymbol{\beta}
+$$
+$$
+\begin{aligned}
+    Pr(c_i)=
+    \begin{cases}
+      \theta,& \text{if } c_{i} = 0 \\
+      (1 - \theta) Lognormal(\lambda_{i}, \sigma),  & \text{otherwise}
+    \end{cases}
+  \end{aligned}
+$$
+
+## Modeling Results
+
+Below is the joint negative log likelihood for each model fitted to the data  
+
+|     | log_normal| gamma| log_normal_cov|
+|:----|----------:|-----:|--------------:|
+|jnll |   62639.31| 61922|       61790.09|  
+
+the parameter estimates for each model as specified above  
+
+|               |     theta|      sigma|   beta_int|   beta_lat|  beta_long|
+|:--------------|---------:|----------:|----------:|----------:|----------:|
+|log_normal     | 0.0347256|   2.512687|  2.8182012|         NA|         NA|
+|gamma          | 0.0347257| 272.164028| -0.9919551|         NA|         NA|
+|log_normal_cov | 0.0347257|   2.338008|  1.2465341| -0.6321875| -0.2274766|  
+
+and the log predictive score  
+
+|           | log_normal|    gamma| log_normal_cov|
+|:----------|----------:|--------:|--------------:|
+|pred_score |   6.130124| 6.071572|        6.06072|
+
+
+## Simulation of catch rates  
+
+Using the parameters and model specifications shown above we can then simulate 
+catch rate data to resemble the data that we have. In doing so we can examine 
+the consequence of incorrectly specifying the model when we know the exact way 
+that the data was generated. Below is the bias in the $\beta_{intercept}$ term 
+when modeling the simulated data in various ways. The red bar shows the true 
+$\beta_{intercept}$ term and the density plot shows the distribution of the 
+estimated values of $\beta_{intercept}$ across 100 simulations. 
+
+![](/home/neal/Documents/Classes/2016_Spatio-temporal_models/Week\ 1\ --\ Likelihoods\ and\ linear\ models/Homework/int_plot.png  ""){#id .class width=475 height=315px}\  
+
+![O](/home/neal/Documents/Classes/2016_Spatio-temporal_models/Week\ 1\ --\ Likelihoods\ and\ linear\ models/Homework/pred_nll.png  "")\

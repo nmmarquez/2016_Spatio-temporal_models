@@ -1,11 +1,15 @@
 rm(list=ls())
 setwd("~/Documents/Classes/2016_Spatio-temporal_models/Week 1 -- Likelihoods and linear models/Homework/")
-set.seed(123)
+set.seed(777)
 library(TMB)
 library(ggplot2)
 library(SpatialDeltaGLMM)
+library(knitr)
 
 # Compile the cpp code
+if (file.exists("hw1.so")) file.remove("hw1.so")
+if (file.exists("hw1.o")) file.remove("hw1.o")
+if (file.exists("hw1.dll")) file.remove("hw1.dll")
 compile("hw1.cpp")
 
 # Clean the data for modeling
@@ -72,7 +76,7 @@ M <- 100 # number of simulations
 # simulate the covariates to use for the analysis
 simulate_covs <- function(N){
     cbind(rep(1, N), sapply(1:ncov, function(i) 
-        rnorm(N, mean(X[,i+1]), sd(X[,i+1]))))
+        rnorm(N, mean(X[,i+1]), 1)))
 }
 
 # based on a set of covariates and model form simulate a catch
@@ -80,7 +84,7 @@ simulate_catch <- function(covs, use_gamma, beta, sigma, zero_prob){
     lin_pred <- covs %*% beta
     zero_catches <-rbinom(N, 1, 1-zero_prob)
     if(use_gamma){
-        catches <- rgamma(N, exp(lin_pred), sigma) * zero_catches
+        catches <- rgamma(N, exp(lin_pred) / sigma, scale=sigma) * zero_catches
     }
     else{
         catches <- rlnorm(N, lin_pred, sigma) * zero_catches
@@ -97,12 +101,75 @@ catch_simulations <- lapply(models, function(x) sapply(1:M, function(i)
                    beta_normalize(x$Report$beta), x$Report$sigma, 
                    x$Report$zero_prob)))
 
+# check out some simulations
+hist_sim <- function(model, i=1, log=TRUE, catch_sim = catch_simulations){
+    datur <- ifelse(log, log(catch_sim[[model]][,i]+1), catch_sim[[model]][,i]) 
+    hist(datur)
+}
+
+hist_sim("log_normal", 10)
+hist_sim("gamma", 10)
+hist_sim("log_normal_cov", 10)
+
 # no more k fold cross validation
-K <- 0
+K <- 1
 
 # run each model on each simulation
-models <- lapply(catch_simulations, function(model_response) 
+model_sims <- lapply(catch_simulations, function(model_response) 
     lapply(1:M, function(i)
         lapply(model_spec, function(x)
             run_model(x$use_gamma, x$use_cov, covariate_simulations[[i]], 
                       model_response[,i]))))
+
+# intercept estimate bias 
+int_est <- lapply(model_sims, function(x) t(sapply(1:length(x), function(i)
+    sapply(x[[i]], function(j) j$Report$beta[1]))))
+
+par(mfrow=c(3,3), mar=c(2, 4, 4, 2) + 0.1)
+for(i in 1:3){
+    for(j in 1:3){
+        main_ <- ifelse(i==1, paste0('Simulated with ', names(models)[j]),'')
+        ylab_ <- ifelse(j==1, paste0('Modeled as ', names(models)[i]),'')
+        font.lab_ <- ifelse(j==1, 2, 1)
+        int_ <- int_est[[j]][,i]
+        true_ <- models[[j]]$Report$beta[1]
+        sd_ <- sd(int_)
+        xlim_ <- c(min(c(min(int_, true_)))-sd_, max(c(max(int_, true_)))+sd_)
+        plot(density(int_), xlim=xlim_, ylab=ylab_, main=main_,
+             font.lab=font.lab_, xlab='', cex.lab=1.2)
+        abline(v=models[[j]]$Report$beta[1], col="red", lwd=2)
+    }
+}
+par(mfrow=c(1,1))
+
+# plot difference in predictive OOS jnll
+pred_jnll <- lapply(model_sims, function(x) t(sapply(1:length(x), function(i)
+    sapply(x[[i]], function(j) j$PredNLL_k))))
+
+par(mfrow=c(3,3), mar=c(2, 4, 4, 2) + 0.1)
+for(i in 1:3){
+    for(j in 1:3){
+        main_ <- ifelse(i==1, paste0('Simulated with ', names(models)[j]),'')
+        ylab_ <- ifelse(j==1, paste0('Modeled as ', names(models)[i]),'')
+        font.lab_ <- ifelse(j==1, 2, 1)
+        jnll_diff <- pred_jnll[[j]][,i] - pred_jnll[[j]][,j]
+        plot(pred_jnll[[j]][,j], pred_jnll[[j]][,i], ylab=ylab_, main=main_,
+             font.lab=font.lab_, xlab='', cex.lab=1.2)
+    abline(a=0, b=1, col="red")
+    }
+}
+par(mfrow=c(1,1))
+
+jnll_df <- as.data.frame(lapply(models, function(x) sum(x$Report$jnll_vec)))
+rownames(jnll_df) <- "jnll"
+kable(jnll_df, format="markdown")
+
+param_mat <- t(sapply(model_params, function(x) x))
+param_mat[param_mat == 0] <- NA
+param_df <- as.data.frame(param_mat)
+names(param_df) <- c("theta", "sigma", "beta_int", "beta_lat", "beta_long")
+kable(param_df, format="markdown")
+
+log_pred_score_df <- as.data.frame(log_pred_score)
+rownames(log_pred_score_df) <- "pred_score"
+kable(log_pred_score_df, format="markdown")

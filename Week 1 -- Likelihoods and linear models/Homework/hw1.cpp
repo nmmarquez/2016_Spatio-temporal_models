@@ -38,7 +38,7 @@ Type objective_function<Type>::operator() ()
     if(y(i)==0) jnll_vec(i) -= log(zero_prob);
     if(y(i)!=0){
         if(use_gamma){
-            jnll_vec(i) -= log( 1-zero_prob ) + dgamma(y(i), exp(linpred(i)), sigma, true);
+            jnll_vec(i) -= log( 1-zero_prob ) + dgamma(y(i), exp(linpred(i)) / sigma, sigma, true);
         }
         else{
             jnll_vec(i) -= log( 1-zero_prob ) + dlognorm(y(i), linpred(i), sigma, true);
