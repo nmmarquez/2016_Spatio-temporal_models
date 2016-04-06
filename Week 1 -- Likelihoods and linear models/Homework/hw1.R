@@ -72,6 +72,7 @@ log_pred_score <- lapply(models, function(x)
 # simulate the data 
 N <- nrow(EBS_pollock_data) # number of data points
 M <- 100 # number of simulations
+K <- 10
 
 # simulate the covariates to use for the analysis
 simulate_covs <- function(N){
@@ -80,17 +81,20 @@ simulate_covs <- function(N){
 }
 
 # based on a set of covariates and model form simulate a catch
-simulate_catch <- function(covs, use_gamma, beta, sigma, zero_prob){
-    lin_pred <- covs %*% beta
+simulate_catch <- function(covs, use_gamma, betas, sigma, zero_prob){
+    exp_val <- exp(covs %*% betas)
     zero_catches <-rbinom(N, 1, 1-zero_prob)
     if(use_gamma){
-        catches <- rgamma(N, exp(lin_pred) / sigma, scale=sigma) * zero_catches
+        shape <- exp_val
+        catches <- rgamma(N, shape, scale=sigma) * zero_catches
     }
     else{
-        catches <- rlnorm(N, lin_pred, sigma) * zero_catches
+        meanlog <- log(exp_val)
+        catches <- rlnorm(N, meanlog, sigma) * zero_catches
     }
     return(catches)
 }
+
 
 # M covariate simulations to use with the 3 models
 covariate_simulations <- lapply(1:M, function(x) simulate_covs(N))
@@ -101,15 +105,40 @@ catch_simulations <- lapply(models, function(x) sapply(1:M, function(i)
                    beta_normalize(x$Report$beta), x$Report$sigma, 
                    x$Report$zero_prob)))
 
+col_mean_sans_zero <- function(mat, log){
+    if (log){
+        mat_means <- apply(mat, 2, function(x) mean(log(x[x!=0])))
+    }
+    else{
+        mat_means <- apply(mat, 2, function(x) mean(x[x!=0]))
+    }
+    mat_means
+}
+
 # check out some simulations
 hist_sim <- function(model, i=1, log=TRUE, catch_sim = catch_simulations){
-    datur <- ifelse(log, log(catch_sim[[model]][,i]+1), catch_sim[[model]][,i]) 
-    hist(datur)
+    if(log){
+        datur <- catch_sim[[model]][,i]
+    }
+    else{
+        datur <- log(catch_sim[[model]][,i]+1)
+    }
+    hist(datur, main=paste0("Simulation with ", model, " version ", i), 
+         xlab="simulated observation values")
 }
+
 
 hist_sim("log_normal", 10)
 hist_sim("gamma", 10)
 hist_sim("log_normal_cov", 10)
+hist(EBS_pollock_data$catch)
+
+hist(col_mean_sans_zero(catch_simulations$log_normal, log=T))
+hist(col_mean_sans_zero(catch_simulations$gamma, log=T))
+hist(col_mean_sans_zero(catch_simulations$log_normal_cov, log=T))
+hist(col_mean_sans_zero(catch_simulations$log_normal, log=F))
+hist(col_mean_sans_zero(catch_simulations$gamma, log=F))
+hist(col_mean_sans_zero(catch_simulations$log_normal_cov, log=F))
 
 # no more k fold cross validation
 K <- 1
@@ -124,6 +153,7 @@ model_sims <- lapply(catch_simulations, function(model_response)
 # intercept estimate bias 
 int_est <- lapply(model_sims, function(x) t(sapply(1:length(x), function(i)
     sapply(x[[i]], function(j) j$Report$beta[1]))))
+
 
 par(mfrow=c(3,3), mar=c(2, 4, 4, 2) + 0.1)
 for(i in 1:3){
@@ -144,7 +174,7 @@ par(mfrow=c(1,1))
 
 # plot difference in predictive OOS jnll
 pred_jnll <- lapply(model_sims, function(x) t(sapply(1:length(x), function(i)
-    sapply(x[[i]], function(j) j$PredNLL_k))))
+    sapply(x[[i]], function(j) mean(j$PredNLL_k / table(Partition_i))))))
 
 par(mfrow=c(3,3), mar=c(2, 4, 4, 2) + 0.1)
 for(i in 1:3){
@@ -155,7 +185,7 @@ for(i in 1:3){
         jnll_diff <- pred_jnll[[j]][,i] - pred_jnll[[j]][,j]
         plot(pred_jnll[[j]][,j], pred_jnll[[j]][,i], ylab=ylab_, main=main_,
              font.lab=font.lab_, xlab='', cex.lab=1.2)
-    abline(a=0, b=1, col="red")
+        abline(a=0, b=1, col="red")
     }
 }
 par(mfrow=c(1,1))

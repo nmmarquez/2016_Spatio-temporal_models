@@ -1,4 +1,5 @@
 #include <TMB.hpp>
+
 // dlnorm
 template<class Type>
 Type dlognorm(Type x, Type meanlog, Type sdlog, int give_log=0){
@@ -7,14 +8,12 @@ Type dlognorm(Type x, Type meanlog, Type sdlog, int give_log=0){
   if(give_log) return logres; else return exp(logres);
 }
 
-// Space time
-// #include <TMB.hpp>
 template<class Type>
 Type objective_function<Type>::operator() ()
 {
   // Data
   DATA_VECTOR( y_i );
-  DATA_MATRIX( X_ij )
+  DATA_MATRIX( X_ij );
 
   // Parameters
   PARAMETER_VECTOR( b_j );
@@ -27,8 +26,8 @@ Type objective_function<Type>::operator() ()
   int n_data = y_i.size();
 
   // Linear predictor
-  // vector<Type> linpred_i( n_data );
-  vector<Type> linpred_i = X_ij*b_j;
+  vector<Type> linpred_i( n_data );
+  linpred_i = X_ij * b_j;
 
   // Probability of data conditional on fixed effect values
   for( int i=0; i<n_data; i++){

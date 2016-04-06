@@ -2,7 +2,7 @@
 
 // dlnorm
 template<class Type>
-Type dlognorm(Type x, Type meanlog, Type sdlog, int give_log=0){
+Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log=0){
   Type logres = dnorm( log(x), meanlog, sdlog, true) - log(x);
   if(give_log) return logres; else return exp(logres);
 }
@@ -31,17 +31,19 @@ Type objective_function<Type>::operator() ()
   Type pred_jnll = 0;
 
   // Linear predictor
-  vector<Type> linpred = X * beta;
+  vector<Type> exp_val = exp(X * beta);
 
   // Probability of data conditional on fixed effect values
   for( int i=0; i<n_data; i++){
     if(y(i)==0) jnll_vec(i) -= log(zero_prob);
     if(y(i)!=0){
         if(use_gamma){
-            jnll_vec(i) -= log( 1-zero_prob ) + dgamma(y(i), exp(linpred(i)) / sigma, sigma, true);
+            Type shape = exp_val(i);
+            jnll_vec(i) -= log(1-zero_prob) + dgamma(y(i), shape, sigma, true);
         }
         else{
-            jnll_vec(i) -= log( 1-zero_prob ) + dlognorm(y(i), linpred(i), sigma, true);
+            Type meanlog = log(exp_val(i));
+            jnll_vec(i) -= log(1-zero_prob) + dlnorm(y(i), meanlog, sigma, true);
         }
     } 
     // Running counter
@@ -52,7 +54,7 @@ Type objective_function<Type>::operator() ()
   // Reporting
   REPORT(zero_prob);
   REPORT(sigma);
-  REPORT(linpred);
+  REPORT(exp_val);
   REPORT(pred_jnll);
   REPORT(jnll_vec);
   REPORT(theta);

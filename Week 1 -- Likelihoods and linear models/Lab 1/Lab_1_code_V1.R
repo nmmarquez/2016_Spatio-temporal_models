@@ -131,7 +131,7 @@ dev.off()
 ###########
 
 # Step 0 -- make and compile template file
-compile( "delta_model_v2.cpp" )
+compile("delta_model_v2.cpp")
 
 # Step 1 -- divide into partitions
 K = 10
