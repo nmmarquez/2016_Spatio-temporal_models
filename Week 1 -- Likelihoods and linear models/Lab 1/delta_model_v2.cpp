@@ -31,7 +31,12 @@ Type objective_function<Type>::operator() ()
 
   // Linear predictor
   vector<Type> linpred_i( n_data );
-  linpred_i = X_ij*b_j;
+  for( int i=0; i<n_data; i++){
+    linpred_i(i) = 0;
+    for( int j=0; j<n_j; j++){
+      linpred_i(i) += X_ij(i,j) * b_j(j);
+    }
+  }
 
   // Probability of data conditional on fixed effect values
   for( int i=0; i<n_data; i++){
