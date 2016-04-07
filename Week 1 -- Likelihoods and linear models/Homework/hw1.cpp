@@ -38,11 +38,11 @@ Type objective_function<Type>::operator() ()
     if(y(i)==0) jnll_vec(i) -= log(zero_prob);
     if(y(i)!=0){
         if(use_gamma){
-            Type shape = exp_val(i);
+            Type shape = exp_val(i) / sigma;
             jnll_vec(i) -= log(1-zero_prob) + dgamma(y(i), shape, sigma, true);
         }
         else{
-            Type meanlog = log(exp_val(i));
+            Type meanlog = log(exp_val(i)) - (pow(sigma, 2) / 2);
             jnll_vec(i) -= log(1-zero_prob) + dlnorm(y(i), meanlog, sigma, true);
         }
     } 

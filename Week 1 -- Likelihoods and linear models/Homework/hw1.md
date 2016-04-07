@@ -100,12 +100,17 @@ estimated values of $\beta_{intercept}$ across 100 simulations.
 
 ![](/home/neal/Documents/Classes/2016_Spatio-temporal_models/Week\ 1\ --\ Likelihoods\ and\ linear\ models/Homework/int_plot.png  ""){#id .class width=475 height=315px}\  
 
+Using the correct model under which the data was simulated provoides a 
+consistent unbiased estimator for the $\beta_{intercept}$ model. 
+
 Below is the nll for each model 
 against a simulated set where the correct model specification is used for 100 simulations. The red 
 line is $y = x$. If two models had the same nll then we would see there data 
-points all fall on the red line. 
+points all fall on the red line. In this way it can be shown that using the 
+lognormal model with covariates fits the data with less error as it it is less
+susceptible to outliers.
 
-![O](/home/neal/Documents/Classes/2016_Spatio-temporal_models/Week\ 1\ --\ Likelihoods\ and\ linear\ models/Homework/pred_nll.png  "")\
+![O](/home/neal/Documents/Classes/2016_Spatio-temporal_models/Week\ 1\ --\ Likelihoods\ and\ linear\ models/Homework/pred_nll.png  ""){#id .class width=475 height=315px}\
 
 
 The two log normal models have similar data likelihoods which is to be 
