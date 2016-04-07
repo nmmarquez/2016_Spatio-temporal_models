@@ -1,6 +1,6 @@
 
-setwd( "C:/Users/James.Thorson/Desktop/Project_git/2016_classes_private/Spatio-temporal models/Week 2 -- mixed-effects/Lab 2" )
-Use_REML = TRUE
+setwd( "C:/Users/James.Thorson/Desktop/Project_git/2016_Spatio-temporal_models/Week 2 -- mixed-effects/Lab 2" )
+Use_REML = FALSE
 
 ############
 # Generalized linear mixed model
@@ -35,7 +35,7 @@ print( summary(GLM) )
 GLM = glm( y_i ~ 0 + factor(s_i), family="poisson" )
 print( summary(GLM) )
 
-# Using mixed effects (Recommended)
+# Using mixed effects (Recommended) -- doesn't appear to use REML
 library(lme4)
 GLMM = glmer( y_i ~ 1 + (1 | factor(s_i)), family="poisson" )
 print( summary(GLMM) )

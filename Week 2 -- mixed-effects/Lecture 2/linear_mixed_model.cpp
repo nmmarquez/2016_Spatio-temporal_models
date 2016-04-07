@@ -31,14 +31,15 @@ Type objective_function<Type>::operator() ()
   Type SDZ = exp(log_SDZ);
   Type SD0 = exp(log_SD0);
 
-  ADREPORT( SDZ );
   REPORT( SDZ );
-  ADREPORT( SD0 );
   REPORT( SD0 );
-  ADREPORT( Z );
   REPORT( Z );
-  ADREPORT( X0 );
   REPORT( X0 );
-  
+
+  ADREPORT( SDZ );
+  ADREPORT( SD0 );
+  ADREPORT( Z );
+  ADREPORT( X0 );
+
   return jnll;
 }
