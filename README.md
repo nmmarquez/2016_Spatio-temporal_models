@@ -1,6 +1,10 @@
 # Spatio-temporal models for ecologists
 Materials for FSH 507 "Spatio-temporal models for ecologists" in Spring quarter 2016 at University of Washington
 
+# Attending remotely
+* Class is Tu/Th 9:00-10:20am Pacific time
+* Remote attendance is available [here](https://www.gotomeet.me/Thorson)
+
 # Template Model Builder
 ### We will be using TMB
 * C++ functions in TMB can be searched here: http://kaskr.github.io/adcomp/index.html
