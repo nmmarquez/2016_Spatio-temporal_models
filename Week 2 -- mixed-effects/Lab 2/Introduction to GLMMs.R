@@ -1,6 +1,6 @@
 
 setwd( "C:/Users/James.Thorson/Desktop/Project_git/2016_Spatio-temporal_models/Week 2 -- mixed-effects/Lab 2" )
-Use_REML = FALSE
+Use_REML = TRUE
 
 ############
 # Generalized linear mixed model
@@ -28,7 +28,7 @@ histogram( ~ y_i | factor(s_i), breaks=seq( min(y_i), max(y_i), length=10), type
 
 ###### Fit using R
 # No site level (Not recommended)
-GLM = glm( y_i ~ 0, family="poisson" )
+GLM = glm( y_i ~ 1, family="poisson" )
 print( summary(GLM) )
 
 # Using fixed effects (Not recommended)
