@@ -24,11 +24,53 @@ $\lambda_{s,c}$ is the expected count observation for site $s$ count $c$.
 We will attempt to estimate $\mu$ using four different models. 
 
 1. a generalized linear model, with only an intercept term  __glm__
+$$
+\hat{\lambda_{s,c}} = exp(\hat{\mu})
+$$
 2. a GLMM with only among-site variability __glmm_site__
+$$
+\hat{\lambda_{s,c}} = exp(\hat{\mu} + \zeta_{s})
+$$
+$$
+\zeta \sim \mathcal{N}(0, \sigma^{s})
+$$
 3. a GLMM with only overdispersion __glmm_ind__
-4. a GLMM with both among-site variability and overdispersion __glmm_both__  
+$$
+\hat{\lambda_{s,c}} = exp(\hat{\mu} + \epsilon_{s,c})
+$$
+$$
+\epsilon \sim \mathcal{N}(0, \sigma^{c})
+$$
+4. a GLMM with both among-site variability and overdispersion __glmm_both__
+$$
+\hat{\lambda_{s,c}} = exp(\hat{\mu} + \zeta_{s} + \epsilon_{s,c})
+$$
+$$
+\zeta \sim \mathcal{N}(0, \sigma^{s}) ; \epsilon \sim \mathcal{N}(0, \sigma^{c})
+$$
 
 In order to get an idea of how often our confidence intervals for $\mu$ cover 
-the true value we ill simulate 1000 data sets using the specifications above 
+the true value we will simulate 1000 data sets using the specifications above 
 and observe (1) the range of the confidence intervals of our parameter of 
 concern and (2) how often the confidence interval covers the true value.
+
+## Results  
+
+![Uncertainty of $\mu$ estimate for each model/simulation](/home/neal/Documents/Classes/2016_Spatio-temporal_models/Week\ 2\ --\ mixed-effects/Homework/intercept_uncertainty.png  "")
+
+Estimates for $\mu$ and uncertainty for each model were estimated using REML via INLA. 
+$\epsilon$ and $\zeta$ were treated as random effects, where applicable. 
+
+Using the __glm__ model yielded biased and erroneous results that seldom led to 
+confidence intervals that covered the true value of $\mu$. When we start 
+adding in random effects accounting for the site level variance contributed 
+to greater coverage of confidence intervals than including individual level 
+variance. Ultimately using the correct model specifications leads to the 
+uncertainty of parameter estimate $\hat{\mu}$ covering the true value of 
+$\mu$ 1round 95% of the time.  
+
+This pattern likely arises because the assumption of the __glm__ model is that 
+your errors are independent and normally distributed. The __glmm_site__ 
+accounts for the site associativity that is present in the data and why 
+we se ethe large increase in the confidence intervals, even more so than if 
+we added uncertainty in the individual counts as in __glmm_ind__.
