@@ -3,12 +3,12 @@ setwd("~/Documents/Classes/2016_Spatio-temporal_models/Week 2 -- mixed-effects/H
 set.seed(123)
 library(TMB)
 library(ggplot2)
+library(Rmisc)
 
 true_mu <- 2
 
 sim_clams <- function(mu=true_mu, sigma_s=sqrt(1), sigma_y=sqrt(.5), site_num=10, site_obs=10){
     lambda_site <- rlnorm(site_num, mu, sigma_s)
-    # this doesnt seem right...
     y_mean <- sapply(lambda_site, function(x) rlnorm(site_obs, log(x), sigma_y))
     y_obs <- apply(y_mean, 2, function(x) rpois(site_obs, x))
     y_obs
@@ -59,17 +59,23 @@ for(models in names(modeled_sims)){
     modeled_sims[[models]]$std_err <- modeled_sims[[models]][,"Std. Error"]
 }
 
+sim_coverage <- function(results_df){
+    sum(results_df$upper_bound>=true_mu & results_df$lower_bound<=true_mu) / M
+}
+
 plot_results <- function(results_df){
     p <- ggplot(results_df, aes(Estimate, sim_num))
-    p + geom_point() + xlim(-1, 4) + 
+    p + geom_point() + # xlim(-1, 4) + 
         geom_vline(xintercept=true_mu, colour="red") +
         geom_errorbarh(aes(xmax = upper_bound, xmin = lower_bound))
 }
 
-plot_results(modeled_sims$glm)
-plot_results(modeled_sims$glmm_site)
-plot_results(modeled_sims$glmm_ind)
-plot_results(modeled_sims$glmm_both)
+plot_all <- function(i){
+    name_ <- names(modeled_sims)[i]
+    p <- plot_results(modeled_sims[[i]])
+    coverage <- sim_coverage(modeled_sims[[i]])
+    title_ <- paste0("Model Type: ", name_, "; Coverage=", coverage)
+    p + labs(title=title_, y="Simulation")
+}
 
-sum(modeled_sims$glmm_both$upper_bound >= true_mu & 
-    modeled_sims$glmm_both$lower_bound <= true_mu) / M
+multiplot(plotlist=lapply(1:4, plot_all), cols=2)
