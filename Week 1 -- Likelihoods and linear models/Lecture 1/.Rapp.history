@@ -1,0 +1,2 @@
+install.packages("geoR", dependencies = TRUE)
+install.packages("geoRglm", dependencies = TRUE)
