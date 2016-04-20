@@ -1,6 +1,7 @@
 rm(list=ls())
 set.seed(123)
 library(TMB)
+library(knitr)
 setwd("~/Documents/Classes/2016_Spatio-temporal_models/Week 3 -- Temporal Models/Homework/")
 
 model_name <- "hw3"
@@ -43,6 +44,8 @@ run_model <- function(data, use_alpha=FALSE){
 }
 
 model_spec <- expand.grid(b=c(-.5, 0, .5), sigma.obs=c(.2, .4, .8))
+model_spec$sigma_proc <- .4 
+model_spec <- model_spec[,c("b", "sigma_proc", "sigma.obs")]
 
 dlm_simulations <- lapply(1:nrow(model_spec), function(i) 
     lapply(1:M, function(j) 
@@ -50,6 +53,20 @@ dlm_simulations <- lapply(1:nrow(model_spec), function(i)
 
 dlm_analysis <- lapply(dlm_simulations, function(x) 
     t(sapply(x, function(y) run_model(y))))
+
+mean_theta <- as.data.frame(t(sapply(dlm_analysis, function(x) apply(x, 2, mean))))
+names(mean_theta) <- paste0(names(mean_theta), "_hat")
+sd_theta <- as.data.frame(t(sapply(dlm_analysis, function(x) apply(x, 2, sd))))
+names(sd_theta) <- paste0(names(sd_theta), "_sd")
+q25_theta <- as.data.frame(t(sapply(dlm_analysis, function(x) 
+    apply(x, 2, function(y) quantile(y, probs=.025)))))
+names(q25_theta) <- paste0(names(q25_theta), "_q25")
+q975_theta <- as.data.frame(t(sapply(dlm_analysis, function(x) 
+    apply(x, 2, function(y) quantile(y, probs=.975)))))
+names(q975_theta) <- paste0(names(q975_theta), "_q975")
+
+kable(cbind(model_spec, mean_theta, sd_theta), format="markdown", digits=3)
+kable(cbind(model_spec, q25_theta, q975_theta), format="markdown", digits=3)
 
 plot_param_hist <- function(values, ylab, xlab, main, true_val=NULL){
     lower_ <- quantile(values, probs=.025)
@@ -109,3 +126,4 @@ plot_param_hist(gomp_sims[,"b"], ylab="", xlab="", main="beta", true_val=.7)
 plot_param_hist(gomp_sims[,"sigma_proc"], ylab="", xlab="", main="sigma_proc", true_val=.2)
 plot_param_hist(gomp_sims[,"sigma_obs"], ylab="", xlab="", main="sigma_obs", true_val=.5)
 par(mfrow=c(1,1))
+
