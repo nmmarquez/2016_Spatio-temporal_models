@@ -1,0 +1,97 @@
+load("/Users/noble/Desktop/WORK/ALTERED PROJECTS/Spatio-temporal Class/Week 4 -- Spatial models theory/Lab/lab4.rdata")
+library(geoR)
+install.packages("geoR", dependencies = TRUE)
+library(geoR)
+install.packages("geoR", contriburl="http://leg.ufpr.br/~paulojus/geoR")
+library(geo$)
+library(geoR)
+system("ls -ld /usr/local /usr/local/lib /usr/local/lib/libtcl*")
+load("/Users/noble/Desktop/WORK/ALTERED PROJECTS/Spatio-temporal Class/Week 4 -- Spatial models theory/Lab/lab4.rdata")
+library(geo$)
+library(geoR)
+?geoR
+?variog
+# binned variogram#
+vario.b <- variog(s100, max.dist=1)#
+# variogram cloud#
+vario.c <- variog(s100, max.dist=1, op="cloud")#
+#binned variogram and stores the cloud#
+vario.bc <- variog(s100, max.dist=1, bin.cloud=TRUE)#
+# smoothed variogram#
+vario.s <- variog(s100, max.dist=1, op="sm", band=0.2)#
+##
+##
+# plotting the variograms:#
+par(mfrow=c(2,2))#
+plot(vario.b, main="binned variogram") #
+plot(vario.c, main="variogram cloud")#
+plot(vario.bc, bin.cloud=TRUE, main="clouds for binned variogram")  #
+plot(vario.s, main="smoothed variogram")
+vario100 <- variog(s100, max.dist=1)#
+ini.vals <- expand.grid(seq(0,1,l=5), seq(0,1,l=5))#
+ols <- variofit(vario100, ini=ini.vals, fix.nug=TRUE, wei="equal")#
+summary(ols)#
+wls <- variofit(vario100, ini=ini.vals, fix.nug=TRUE)#
+summary(wls)#
+plot(vario100)#
+lines(wls)#
+lines(ols, lty=2)
+plot(vario.bc, bin.cloud=TRUE, main="clouds for binned variogram")
+par(mfrow = c(2,2))
+plot(vario.bc, bin.cloud=TRUE, main="clouds for binned variogram")
+plot(vario.c, main="variogram cloud")
+vario.c <- variog(s100, max.dist= 5, op="cloud")
+par(mfrow = c(2,2))#
+plot(vario.c, main="variogram cloud")
+head(s100)
+vario.b <- variog(s100, max.dist=1)
+plot(vario.b, main="binned variogram")
+par(mfrow = c(2,2))#
+plot(vario.c, main="variogram cloud")#
+plot(vario.bc, bin.cloud=TRUE, main="clouds for binned variogram")#
+plot(vario.b, main="binned variogram")
+par(mfrow = c(2,2))#
+plot(vario.c, main="variogram cloud")#
+plot(vario.bc, bin.cloud=TRUE, main="clouds for binned variogram", xlab = "bin index")#
+plot(vario.b, main="binned variogram")
+?plot.variog
+vario100 <- variog(s100, max.dist=1)#
+ini.vals <- expand.grid(seq(0,1,l=5), seq(0,1,l=5))#
+ols <- variofit(vario100, ini=ini.vals, fix.nug=TRUE, wei="equal")#
+summary(ols)#
+wls <- variofit(vario100, ini=ini.vals, fix.nug=TRUE)#
+summary(wls)#
+plot(vario100)#
+lines(wls)#
+lines(ols, lty=2)
+par(mfrow = c(2,2))#
+plot(vario.c, main="variogram cloud")#
+plot(vario.bc, bin.cloud=TRUE, main="clouds for binned variogram")#
+plot(vario.b, main="binned variogram")#
+#
+#fit a variogram - example from geoR variofit()#
+vario100 <- variog(s100, max.dist=1)#
+ini.vals <- expand.grid(seq(0,1,l=5), seq(0,1,l=5))#
+ols <- variofit(vario100, ini=ini.vals, fix.nug=TRUE, wei="equal")#
+summary(ols)#
+wls <- variofit(vario100, ini=ini.vals, fix.nug=TRUE)#
+summary(wls)#
+plot(vario100)#
+lines(wls, col = 3)#
+lines(ols, col = 2)
+plot(vario100)#
+lines(wls, col = 4, lwd = 3)#
+lines(ols, col = 2, lwd = 3)
+#plots#
+par(mfrow = c(2,2))#
+plot(vario.c, main="variogram cloud")#
+plot(vario.bc, bin.cloud=TRUE, main="clouds for binned variogram")#
+plot(vario.b, main="binned variogram")#
+plot(vario100)#
+lines(wls, col = 4, lwd = 3)#
+lines(ols, col = 2, lwd = 3)
+load("/Users/noble/Desktop/WORK/ALTERED PROJECTS/Spatio-temporal Class/Week 4 -- Spatial models theory/Lab/lab4.rdata")
+install.packages("geoR", dependencies = TRUE)
+library(geoR)
+install.packages("random.fields", dependencies = TRUE)
+install.packages("RandomFields", dependencies = TRUE)
