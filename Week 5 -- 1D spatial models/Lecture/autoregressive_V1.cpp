@@ -60,10 +60,12 @@ Type objective_function<Type>::operator() ()
 
   // Probability of random effects
   using namespace density;
+  //// Going downstream in the random effect vector
   if( Options_vec(0)==0 ){
     jnll_comp(1) -= dnorm( epsilon_s(0), Type(0.0), pow(sigma2,0.5), true );
     for(int s=1; s<n_s; s++) jnll_comp(1) -= dnorm( epsilon_s(s), rho*epsilon_s(s-1), pow(sigma2,0.5), true );
   }
+  //// Calculate using precision matrix
   if( Options_vec(0)==1 ){
     matrix<Type> Q_ss(n_s,n_s);
     Q_ss.setZero();
@@ -75,6 +77,7 @@ Type objective_function<Type>::operator() ()
     REPORT( Q_ss )
     jnll_comp(1) -= dmvnorm( epsilon_s, Q_ss, true );
   }
+  //// Calculate using covariance matrix
   if( Options_vec(0)==2 ){
     matrix<Type> Cov_ss(n_s,n_s);
     for(int s1=0; s1<n_s; s1++){
@@ -85,6 +88,7 @@ Type objective_function<Type>::operator() ()
     REPORT( Cov_ss );
     jnll_comp(1) += MVNORM(Cov_ss)( epsilon_s );
   }
+  //// Calculate using built-in TMB functions
   if( Options_vec(0)==3 ){
     jnll_comp(1) += SCALE( AR1(rho), pow(sigma2 / (1-pow(rho,2)),0.5))( epsilon_s );
   }
