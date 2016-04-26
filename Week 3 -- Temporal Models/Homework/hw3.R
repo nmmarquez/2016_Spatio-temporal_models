@@ -65,8 +65,10 @@ q975_theta <- as.data.frame(t(sapply(dlm_analysis, function(x)
     apply(x, 2, function(y) quantile(y, probs=.975)))))
 names(q975_theta) <- paste0(names(q975_theta), "_q975")
 
-kable(cbind(model_spec, mean_theta, sd_theta), format="markdown", digits=3)
-kable(cbind(model_spec, q25_theta, q975_theta), format="markdown", digits=3)
+kable(cbind(model_spec, mean_theta), format="markdown", digits=3)
+kable(cbind(model_spec, sd_theta), format="markdown", digits=3)
+kable(cbind(model_spec, q25_theta), format="markdown", digits=3)
+kable(cbind(model_spec, q975_theta), format="markdown", digits=3)
 
 plot_param_hist <- function(values, ylab, xlab, main, true_val=NULL){
     lower_ <- quantile(values, probs=.025)
@@ -127,3 +129,15 @@ plot_param_hist(gomp_sims[,"sigma_proc"], ylab="", xlab="", main="sigma_proc", t
 plot_param_hist(gomp_sims[,"sigma_obs"], ylab="", xlab="", main="sigma_obs", true_val=.5)
 par(mfrow=c(1,1))
 
+Gompertz_simulations <- lapply(1:M, function(x) 
+    DLM_sim(a=1.2, b=.7, sigma.obs=.5, sigma.proc=.2, y1=100))
+
+gomp_sims <- t(sapply(Gompertz_simulations, function(x) 
+    run_model(x, use_alpha=TRUE)))
+
+par(mfrow=c(2,2))
+plot_param_hist(gomp_sims[,"a"], ylab="", xlab="", main="alpha", true_val=1.2)
+plot_param_hist(gomp_sims[,"b"], ylab="", xlab="", main="beta", true_val=.7)
+plot_param_hist(gomp_sims[,"sigma_proc"], ylab="", xlab="", main="sigma_proc", true_val=.2)
+plot_param_hist(gomp_sims[,"sigma_obs"], ylab="", xlab="", main="sigma_obs", true_val=.5)
+par(mfrow=c(1,1))
