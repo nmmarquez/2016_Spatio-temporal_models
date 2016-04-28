@@ -41,5 +41,6 @@ Type objective_function<Type>::operator() () {
     ADREPORT(sigma_obs);
     ADREPORT(a);
     ADREPORT(b);
+    ADREPORT(u);
     return nll;
 }
