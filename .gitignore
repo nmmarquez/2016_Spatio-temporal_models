@@ -1,8 +1,6 @@
-<<<<<<< HEAD
 *.pyc
 *~
 .idea/
-hw*.pdf
 *.ipynb_checkpoints
 *.csv
 *.dat
