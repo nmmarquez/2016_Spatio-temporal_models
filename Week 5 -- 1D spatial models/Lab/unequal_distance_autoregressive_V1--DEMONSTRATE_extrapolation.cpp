@@ -1,6 +1,11 @@
 
 #include <TMB.hpp>
 
+template<class Type>
+bool isNA(Type x){
+  return R_IsNA(asDouble(x));
+}
+
 // Space time
 template<class Type>
 Type objective_function<Type>::operator() ()
@@ -57,9 +62,11 @@ Type objective_function<Type>::operator() ()
   }
 
   // Probability of data conditional on random effects
+  Type TotalAbundance = 0;
   for( int s=0; s<n_s; s++){
   for( int i=0; i<n_i; i++){
-    jnll_comp(0) -= dpois( c_si(s,i), exp(beta0 + epsilon_s(s)), true );
+    if( !isNA(c_si(s,i)) ) jnll_comp(0) -= dpois( c_si(s,i), exp(beta0 + epsilon_s(s)), true );
+    TotalAbundance += exp(beta0 + epsilon_s(s));
   }}
 
   // Reporting
@@ -68,6 +75,7 @@ Type objective_function<Type>::operator() ()
   REPORT( jnll );
   REPORT( sigma2 );
   REPORT( rho );
+  ADREPORT( TotalAbundance );
 
   return jnll;
 }
