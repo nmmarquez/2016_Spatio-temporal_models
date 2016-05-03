@@ -1,5 +1,5 @@
 
-Sim_Fn = function( n_i=1000, Scale=2, logSD_spatial=0.1, L0=10, Linf_0=100, beta_y=0.02, growth_rate=0.1, mortality_rate=growth_rate*1.6, logSD_resid=0.05){
+Sim_Fn = function( n_i=1000, Scale=2, Sigma2=1, logSD_spatial=0.1, L0=10, Linf_0=100, beta_y=0.02, growth_rate=0.1, mortality_rate=growth_rate*1.6, logSD_resid=0.05){
   require( RandomFields )
 
   # Sample locations
