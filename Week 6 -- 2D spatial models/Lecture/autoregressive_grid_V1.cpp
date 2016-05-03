@@ -60,24 +60,26 @@ Type objective_function<Type>::operator() ()
   ///// Make precision matrix for single axis
   matrix<Type> Q_yy(n_y,n_y);
   Q_yy.setZero();
-  for(int y=0; y<n_y; y++) Q_yy(y,y) = (1+pow(rho,2))/sigma2;
+  for(int y=0; y<n_y; y++) Q_yy(y,y) = (1+pow(rho,2));
   for(int y=1; y<n_y; y++){
-    Q_yy(y-1,y) = -rho/sigma2;
-    Q_yy(y,y-1) = -rho/sigma2;
+    Q_yy(y-1,y) = -rho;
+    Q_yy(y,y-1) = -rho;
   }
   REPORT( Q_yy )
   //// Going downstream in the random effect vector
   if( Options_vec(0)==0 ){
     vector<Type> Tmp_y(n_y);
     matrix<Type> Q0_yy(n_y,n_y);
-    Q0_yy = Q_yy * ( 1-pow(rho,2) );
+    Q0_yy = Q_yy * ( 1-pow(rho,2) ) / sigma2;
+    matrix<Type> Q1_yy(n_y,n_y);
+    Q1_yy = Q_yy / sigma2;
     for(int x=0; x<n_x; x++){
       for(int y=0; y<n_y; y++){
         if(x==0) Tmp_y(y) = epsilon_xy(0,y);
         if(x>=1) Tmp_y(y) = epsilon_xy(x,y) - rho*epsilon_xy(x-1,y);
       }
       if(x==0) jnll_comp(1) -= dmvnorm( Tmp_y, Q0_yy, true );
-      if(x>=1) jnll_comp(1) -= dmvnorm( Tmp_y, Q_yy, true );
+      if(x>=1) jnll_comp(1) -= dmvnorm( Tmp_y, Q1_yy, true );
     }
   }
   //// Calculate using precision matrix
@@ -85,6 +87,7 @@ Type objective_function<Type>::operator() ()
     int n_z = n_x * n_y;
     matrix<Type> Q_zz(n_z, n_z);
     Q_zz = kronecker( Q_yy, Q_yy );
+    Q_zz = Q_zz / sigma2;
     REPORT( Q_zz );
     vector<Type> epsilon_z(n_z);
     int Count = 0;
