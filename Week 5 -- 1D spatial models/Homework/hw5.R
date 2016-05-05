@@ -37,29 +37,24 @@ Sim_Fn <- function(n_i=1000, Scale=2, logSD_spatial=0.1, L0=10, Linf_0=100,
 }
 
 df <- Sim_Fn( n_i=1000 )
-use_site <- TRUE
+use_site <- F
 
-run_model <- function(df, use_site=FALSE){
+#run_model <- function(df, use_site=FALSE){
     N <- nrow(df)
     covs <- use_site + 1
     X <- df[, c("Linf_i", "y_i")]; X[,1] <- 1
-    random <- c("epsilon", "pi")
+    random <- c("pi")
     dyn.load(dynlib(model_name))
-    Map <- list(log_sigma_e=factor(NA), epsilon=factor(rep(NA, N)))
-    Map <- list(logit_rho=factor(NA), 
-                log_sigma_p2=factor(NA), pi=factor(rep(NA, N)))
+    #Map <- list(log_sigma_e=factor(NA), epsilon=factor(rep(NA, N)))
+    #Map <- list(logit_rho=factor(NA), 
+    #            log_sigma_p2=factor(NA), pi=factor(rep(NA, N)))
     Params <- list(pi=rep(0, N), epsilon=rep(0, N), beta=rep(0, covs), log_l0=0,
                    logit_rho=0, log_sigma_e=0, log_sigma_p2=0, log_sigma_l=0,
                    log_k=0)
     Data <- list(Y=df$l_i, A=df$a_i, P=df$y_i, X=as.matrix(X[,1:covs]))
-    Obj <- MakeADFun(data=Data, parameters=Params, DLL=model_name, random=random, map=Map)
+    Obj <- MakeADFun(data=Data, parameters=Params, DLL=model_name, random=random)
     Opt <- nlminb(start=Obj$par, objective=Obj$fn, gradient=Obj$gr)
     Report <- Obj$report()
     SD <- sdreport(Obj)
     dyn.unload(dynlib(model_name))
-    params <- c("b", "sigma_proc", "sigma_obs")
-    if (use_alpha){
-        params <- c("a", "b", "sigma_proc", "sigma_obs") 
-    }
-    summary(SD)[params, 1]
-}
+#}

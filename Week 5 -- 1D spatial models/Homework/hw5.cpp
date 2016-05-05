@@ -20,10 +20,10 @@ Type objective_function<Type>::operator() () {
     PARAMETER(logit_rho);
     PARAMETER_VECTOR(beta);
     PARAMETER_VECTOR(pi);
-    PARAMETER_VECTOR(epsilon);
+    // PARAMETER_VECTOR(epsilon);
     PARAMETER(log_l0);
     PARAMETER(log_k);
-    PARAMETER(log_sigma_e);
+    // PARAMETER(log_sigma_e);
     PARAMETER(log_sigma_p2);
     PARAMETER(log_sigma_l);
 
@@ -35,7 +35,7 @@ Type objective_function<Type>::operator() () {
     Type l0 = exp(log_l0);
     Type k = exp(log_k);
     Type sigma_p2 = exp(log_sigma_p2);
-    Type sigma_e = exp(log_sigma_e);
+    // Type sigma_e = exp(log_sigma_e);
     Type sigma_l = exp(log_sigma_l);
     Type rho = 1 / (1 + exp(-logit_rho));
 
@@ -46,7 +46,7 @@ Type objective_function<Type>::operator() () {
 
     // linear prediction
     for(int n = 0; n < N; n++){
-        log_l_inf[n] = pi[n] + epsilon[n];
+        log_l_inf[n] = pi[n]; //+ epsilon[n];
         for(int k = 0; k < K; k++){
             log_l_inf[n] += beta[k] * X(n,k);
         }
@@ -82,7 +82,7 @@ Type objective_function<Type>::operator() () {
     // report the parameters I need
     REPORT(y_pred);
     REPORT(l_inf);
-    REPORT(epsilon);
+    // REPORT(epsilon);
     REPORT(sigma_l);
     REPORT(sigma_p2);
     REPORT(rho);
