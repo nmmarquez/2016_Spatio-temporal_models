@@ -20,7 +20,7 @@ Type objective_function<Type>::operator() () {
 
     PARAMETER(logit_rho); // 
     PARAMETER_VECTOR(beta); // weights
-    PARAMETER_VECTOR(pi); // spatial relatedness
+    PARAMETER_VECTOR(pi); // spatial errors
     PARAMETER(log_l0); // 
     PARAMETER(log_k); // 
 
@@ -36,7 +36,6 @@ Type objective_function<Type>::operator() () {
     Type k = exp(log_k);
     Type sigma_p = exp(log_sigma_p);
     Type sigma_p2 = pow(sigma_p, 2.);
-    // Type sigma_e = exp(log_sigma_e);
     Type sigma_l = exp(log_sigma_l);
     Type rho = 1 / (1 + exp(-logit_rho));
 
@@ -44,20 +43,6 @@ Type objective_function<Type>::operator() () {
     vector<Type> l_inf(N);
     vector<Type> l_inf_obs(N);
     vector<Type> y_pred(N);
-
-    // linear prediction
-    for(int n = 0; n < N; n++){
-        log_l_inf[n] = pi[n]; // spatial random effect
-        for(int k = 0; k < K; k++){
-            log_l_inf[n] += beta[k] * X(n,k); // add in covariates separately
-        }
-    }
-
-    l_inf = exp(log_l_inf);
-
-    for(int n = 0; n < N; n++){
-        y_pred[n] = l_inf[n] - ((l_inf[n] - l0) * exp(Type(-1.) * k * A[n]));
-    }
 
     // record nll
     Type nll = 0.;
@@ -71,8 +56,8 @@ Type objective_function<Type>::operator() () {
                 nll -= dnorm(pi[n], Type(0.), sigma_p);
             }
             else{
-                dist = abs(P[n]-P[n-1]);
-                nll -= dnorm(pi[n], pow(rho,dist)*pi[n-1], pow(sigma_p2*(1-pow(rho,2*dist)), 0.5), true);
+                dist = P[n]-P[n-1];
+                nll -= dnorm(pi[n], pow(rho,dist)*pi[n - 1], pow(sigma_p2*(1.-pow(rho,2.*dist)), 0.5), true);
             }
         }
     }
@@ -88,6 +73,33 @@ Type objective_function<Type>::operator() () {
             }
         }
     nll += MVNORM(cov_mat)(pi);
+    }
+    
+    if(re_option == 2){
+        for(int n = 0; n < N; n++){
+            if(n == 0){
+                nll -= dnorm(pi[n], Type(0.), sigma_p);
+            }
+            else{
+                dist = P[n]-P[n-1];
+                nll -= dnorm(pi[n], rho*pi[n - 1], sigma_p, true);
+            }
+        }
+    }
+    
+    // linear prediction
+    for(int n = 0; n < N; n++){
+        log_l_inf[n] = Type(0.); // initiate to zero
+        log_l_inf[n] += pi[n]; // spatial random effect
+        for(int k = 0; k < K; k++){
+            log_l_inf[n] += beta[k] * X(n,k); // add in covariates separately
+        }
+    }
+    
+    l_inf = exp(log_l_inf);
+    
+    for(int n = 0; n < N; n++){
+        y_pred[n] = l_inf[n] - ((l_inf[n] - l0) * exp(Type(-1.) * k * A[n]));
     }
 
     // data likelihood
