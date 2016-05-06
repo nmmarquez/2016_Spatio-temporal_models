@@ -71,7 +71,7 @@ Type objective_function<Type>::operator() () {
                 nll -= dnorm(pi[n], Type(0.), sigma_p);
             }
             else{
-                dist = P[n]-P[n-1];
+                dist = abs(P[n]-P[n-1]);
                 nll -= dnorm(pi[n], pow(rho,dist)*pi[n-1], pow(sigma_p2*(1-pow(rho,2*dist)), 0.5), true);
             }
         }
@@ -82,7 +82,7 @@ Type objective_function<Type>::operator() () {
         matrix<Type> cov_mat(N,N);
         for(int n1 = 0; n1 < N; n1++){
             for(int n2 = n1; n2 < N; n2++){
-                dist = P[n2]-P[n1];
+                dist = abs(P[n2]-P[n1]);
                 cov_mat(n1,n2) = sigma_p2 * pow(rho, dist);
                 if(n1!=n2) cov_mat(n2,n1) = cov_mat(n1,n2);
             }
