@@ -8,6 +8,7 @@
 *.graph
 *_nb
 *.RData
+*.rda
 r_slides/
 lecture_slides/
 *.Rdata
