@@ -1,75 +1,7 @@
 rm(list=ls())
+set.seed(123)
 library(TMB)
 setwd( "~/Documents/Classes/2016_Spatio-temporal_models/Week 5 -- 1D spatial models/Lecture/" )
-
-############################
-# Visualize Gaussian process
-############################
-
-library(RandomFields)
-
-png( "Gaussian_process.png", width=8, height=5, res=200, units="in")
-  par( mfrow=c(2,2), mar=c(2,2,2,0), mgp=c(2,0.5,0) )
-  for(i in 1:4){
-    Scale = c(10, 10, 25, 25)[i]
-    SD = c(0.5, 1, 0.5, 1)[i]
-    x_i = seq(0,100,length=100)
-    RMmodel = RMgauss(var=SD^2, scale=Scale)
-    plot( 1, type="n", xlim=range(x_i), ylim=c(-3,3), main=paste0("SD=",SD," Scale=",Scale), xlab="", ylab="")
-    for(j in 1:20){
-      gp_i = RFsimulate(model=RMmodel, x=x_i, y=rep(0,length(x_i)))@data[,1]
-      lines( x=x_i, y=gp_i )
-    }
-  }
-dev.off()
-
-###################
-# Visualize autocorrelation
-###################
-
-Rho = 0.8
-X = 0:10
-Corr = Rho^X
-
-png( file="Autocorrelation.png", width=4, height=4, res=200, units='in')
-  plot( x=X, y=Corr, xlab="distance", ylab="Correlation", ylim=c(0,1) )
-dev.off()
-
-###################
-# Visualize autocorrelation vs. random-walk
-###################
-
-Rho = c(-0.5,0,0.5,0.99)
-Marginal_Sigma = 1
-Conditional_Sigma = sqrt( 1-Rho^2 ) * Marginal_Sigma
-
-Y = X = 1:1e2
-png( file="Autocorrelated_series.png", width=4, height=6, res=200, units='in')
-  par( mfrow=c(4,1), mgp=c(2,0.5,0), mar=c(2,2,1,0), xaxs="i")
-  for(i in 1:4){
-    Y[1] = 0
-    for(s in 2:length(X)) Y[s] = Y[s-1]*Rho[i] + rnorm(1, mean=0, sd=Conditional_Sigma[i])
-    plot( x=X, y=Y, xlab="location", ylab="value", ylim=c(-3,3), type="l", main=paste0("Rho = ",Rho[i]) )
-  }
-dev.off()
-
-###################
-# Math check on inverse-covariance matrix
-###################
-Rho = 0.5
-Sigma2 = 2 ^ 2
-x = 1:10
-Dist = outer(x, x, FUN=function(a,b){abs(a-b)})
-
-# Calculate Q directly
-Cov = Sigma2 / (1-Rho^2) * Rho^Dist
-Q = solve(Cov)
-
-# Calculate Q analytically
-M = diag(length(x)) + Rho^2
-M[ cbind(1:9,2:10) ] = -Rho
-M[ cbind(2:10,1:9) ] = -Rho
-Q2 = 1/Sigma2 * M
 
 ###################
 # Equal distance autoregressive
@@ -96,7 +28,10 @@ for(i in 1:ncol(c_si)){
 # Compile
 Params = list( "beta0"=0, "ln_sigma2"=0, "logit_rho"=0, "epsilon_s"=rnorm(length(x)) )
 model <- "autoregressive_V1_edit"
-compile( paste0(model, ".cpp"))
+if (file.exists(paste0(model, ".so"))) file.remove(paste0(model_name, ".so"))
+if (file.exists(paste0(model, ".o"))) file.remove(paste0(model_name, ".o"))
+if (file.exists(paste0(model, ".dll"))) file.remove(paste0(model_name, ".dll"))
+compile(paste0(model, ".cpp"))
 dyn.load( dynlib(model) )
 
 ######## Version 0 -- Stochastic process with automatic sparseness detection
@@ -108,33 +43,36 @@ Opt = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
 par0 = Opt$par
 h0 = Obj$env$spHess( random=TRUE )
 h0f = Obj$env$spHess()
+Report0 <- Obj$report()
 
 ######## Version 1 -- Analytic precision matrix
 # Build object
 Data = list("Options_vec"=c(1), "c_si"=c_si )
-Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_s", DLL="autoregressive_V1" )
+Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_s", DLL=model )
 # Optimize
 Opt = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
 par1 = Opt$par
 h1 = Obj$env$spHess(random=TRUE)
 h1f = Obj$env$spHess()
+Report1 <- Obj$report()
 
 ######## Version 2 -- Covariance and built-in function
 # Build object
 Data = list("Options_vec"=c(2), "c_si"=c_si )
-Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_s", DLL="autoregressive_V1" )
+Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_s", DLL=model)
 # Optimize
 Opt = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
 par2 = Opt$par
 h2 = Obj$env$spHess(random=TRUE)
+Report2 <- Obj$report()
 
 ######## Version 3 -- Built-in function for AR process
 # Build object
 Data = list("Options_vec"=c(3), "c_si"=c_si )
-Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_s", DLL="autoregressive_V1" )
+Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_s", DLL=model )
 # Optimize
 Opt = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
 par3 = Opt$par
 h3 = Obj$env$spHess(random=TRUE)
-
+Report3 <- Obj$report()
 

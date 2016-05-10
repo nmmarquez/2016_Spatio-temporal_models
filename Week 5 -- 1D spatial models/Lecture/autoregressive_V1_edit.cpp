@@ -93,10 +93,29 @@ Type objective_function<Type>::operator() ()
   }
   // calculate using built-in TMB
   if( Options_vec(0)==3 ){
-    jnll_comp(1) += SCALE( AR1(rho), pow(sigma2 / (1-pow(rho,2)),0.5))( epsilon_s );
+    jnll_comp(1) += SCALE( AR1(rho), pow(sigma2 / (1-pow(rho,2)),0.5))( epsilon_s ); // why scale an ar1???
     // scale and ar1 are in namespace density
     // ar1 takes a scalar and returns function
     // scale takes a function and a scalar and 
+  }
+  
+  if( Options_vec(0)==4 ){
+      jnll_comp(1) += AR1(rho)(epsilon_s); // why scale an ar1???
+      // scale and ar1 are in namespace density
+      // ar1 takes a scalar and returns function
+      // scale takes a function and a scalar and 
+  }
+  
+  // calculate using precision matrix and GMRF
+  if( Options_vec(0)==5 ){
+      Eigen::SparseMatrix<Type> Q_ss(n_s,n_s);
+      for(int s=0; s<n_s; s++) Q_ss.coeffRef(s,s) = (1+pow(rho,2))/sigma2;
+      for(int s=1; s<n_s; s++){
+          Q_ss.coeffRef(s-1,s) = -rho/sigma2;
+          Q_ss.coeffRef(s,s-1) = -rho/sigma2;
+      }
+      REPORT( Q_ss )
+      jnll_comp(1) += GMRF(Q_ss)(epsilon_s);
   }
 
   // Probability of data conditional on random effects
