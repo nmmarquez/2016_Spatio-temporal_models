@@ -13,7 +13,7 @@ compile(paste0(model_name, ".cpp"))
 
 M <- 100
 
-Sim_Fn <- function( n_i=1000, Scale=2, Sigma2=1, logSD_spatial=0.1, L0=10, 
+Sim_Fn <- function( n_i=1000, Scale=2, Sigma2=1, logSD_spatial=0.01, L0=10, 
                    Linf_0=100, beta_y=0.02, growth_rate=0.1, print=NULL, plot=F,
                    mortality_rate=growth_rate*1.6, logSD_resid=0.05){
     if(!is.null(print)){
@@ -42,7 +42,7 @@ Sim_Fn <- function( n_i=1000, Scale=2, Sigma2=1, logSD_spatial=0.1, L0=10,
 }
 
 if (!file.exists("./data.rda")){
-    df_list <- lapply(1:M, function(x) Sim_Fn(print=x, plot = T, print=x))
+    df_list <- lapply(1:M, function(x) Sim_Fn(print=x, plot = T))
     save(df_list, file="./data.rda")
 }
 load("./data.rda")
@@ -100,4 +100,47 @@ sum(sign(b0_rmse - b1_rmse))
 
 Report <- run_model(df_list[[100]], use_site=T, return_reports = T)
 plot(df_list[[100]]$y_i, Report$l_inf)
+plot(Report$pi)
+
+Report <- run_model(df_list[[100]], use_site=F, return_reports = T)
+plot(df_list[[100]]$y_i, Report$l_inf)
+
+Sim_Fn2 <- function(b0=4.1, b1=.02, sigma_p=.01, N=1000, rho=.7, sigma_l=.05,
+                   growth_rate=0.1, mortality_rate=growth_rate*1.6, l0=10, 
+                   print=NULL, plot=T){
+    if(!is.null(print)){
+        print(print)  
+    }
+    
+    position <- sort(runif(n=N, min=32, max=49))
+    
+    pi <- 1:N * 0
+    pi[1] <- rnorm(1, 0, sigma_p)
+    for(i in 2:N){
+        dist <- position[i] - position[i-1]
+        pi[i] <- rnorm(1, (rho**dist) * pi[i-1], sqrt((sigma_p**2)*(1 - rho**(2*dist))))
+    }
+    log_L_inf <- b0 + (b1 * (position - 40.5)) + pi
+    l_inf <- exp(log_L_inf)
+    if(plot){
+        plot(position, l_inf)
+    }
+    
+    # Simulate ages of samples
+    Survival_a <- exp(-mortality_rate * 1:100)
+    ages <- sample( size=N, x=1:100, prob=Survival_a, replace=TRUE)
+    l_obs <- l_inf - (l_inf-l0) * exp(-growth_rate * ages) * 
+        exp(rnorm(N, mean=0, sd=sigma_l))
+    plot(ages, l_obs)
+    # Bundle and return stuff
+    #data.frame( "y_i"=y_i, "a_i"=a_i, "l_i"=l_i, "Linf_i"=Linf_i)
+    DF <- data.frame("y_i"=position, "a_i"=ages, "l_i"=l_obs, "Linf_i"=l_inf)
+    DF <- DF[order(DF$y_i),]
+    DF
+}
+
+df <- Sim_Fn2()
+
+Report <- run_model(df, use_site=F, return_reports=T)
+plot(df$y_i, Report$l_inf)
 plot(Report$pi)
