@@ -130,6 +130,7 @@ Type objective_function<Type>::operator() ()
   REPORT( jnll );
   REPORT( sigma2 );
   REPORT( rho );
+  REPORT( beta0 );
 
   return jnll;
 }
