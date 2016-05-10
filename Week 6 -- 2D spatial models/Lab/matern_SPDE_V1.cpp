@@ -1,5 +1,6 @@
 
 #include <TMB.hpp>
+
 // Function for detecting NAs
 template<class Type>
 bool isNA(Type x){
