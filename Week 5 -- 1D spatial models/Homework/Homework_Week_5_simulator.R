@@ -22,4 +22,3 @@ Sim_Fn = function( n_i=1000, Scale=2, Sigma2=1, logSD_spatial=0.1, L0=10, Linf_0
   return(DF)
 }
 
-Sim_Fn( n_i=1000 )
