@@ -5,8 +5,6 @@ library(grid)
 library(RMySQL)
 library(data.table)
 
-source('./db_access.R')
-
 
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     plots <- c(list(...), plotlist)
