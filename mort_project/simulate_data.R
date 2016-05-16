@@ -22,24 +22,38 @@ time_plot(df, 1)
 reload_model(model)
 
 df$age_group <- df$age_group_id - min(df$age_group_id)
+df$time_group <- df$year_id - min(df$year_id)
 df <- subset(df, sex_id == 1)
 
 run_model <- function(df, option=1, model_name=model, print=F){
     N <- nrow(df)
-    param_num <- list("0"=3, "1"=5, "2"=8)[[as.character(option)]]
     Map <- list()
-    Random <- c("epsilon_age")
-    if (option != 1){
+    Random <- c("epsilon_age", "epsilon_time")
+    if (option == 0){
         Map[["epsilon_age"]] <- factor(rep(NA, length(unique(df$age_group))))
-        Map[["log_sigma_age"]] <- factor(NA)
+        Map[["epsilon_time"]] <- factor(rep(NA, length(unique(df$time_group))))
+        Map[["logit_rho_age"]] <- factor(NA)
+        Map[["logit_rho_time"]] <- factor(NA)
         Random <- NULL
     }
+    if (option == 1){
+        Map[["epsilon_time"]] <- factor(rep(NA, length(unique(df$time_group))))
+        Map[["logit_rho_age"]] <- factor(NA)
+        Map[["logit_rho_time"]] <- factor(NA)
+        Random <- NULL
+    }
+    if (option == 2){
+        Map[["epsilon_time"]] <- factor(rep(NA, length(unique(df$time_group))))
+        Map[["logit_rho_time"]] <- factor(NA)
+        Random <- c("epsilon_age")
+    }
     dyn.load(dynlib(model_name))
-    Params <- list(log_gpz=rep(0, param_num), log_sigma_obs=0, log_sigma_age=0,
+    Params <- list(log_gpz=rep(0, 5), log_sigma_obs=0, logit_rho_time=0,
                    epsilon_age=rep(0, length(unique(df$age_group))),
-                   logit_rho=0)
+                   epsilon_time=rep(0, length(unique(df$time_group))),
+                   logit_rho_age=0)
     Data <- list(log_rate_mort=df$log_rate, age=df$age_mean, option=option,
-                 age_group=df$age_group, unique_age=unique(df$age_mean))
+                 age_group=df$age_group, time_group=df$time_group)
     Obj <- MakeADFun(data=Data, parameters=Params, DLL=model_name,
                      silent=!print, map=Map, random = Random)
     Obj$env$tracemgc <- print
@@ -57,12 +71,16 @@ run_model <- function(df, option=1, model_name=model, print=F){
 #gpzm_sub <- run_model(subset(df, age_mean > 25), option=0)
 #gpzm <- run_model(df, option=0)
 #silder <- run_model(subset(df, age_mean < 80), option=1)
-silder <- run_model(df, option=1, print=T)
+silder <- run_model(df, option=3, print=T)
 
 test_ages <- sort(unique(df$age_mean))
 fitted_vals <- sim_data(test_ages, a=silder$alpha, b=silder$beta,
                         c=silder$gamma, d=silder$delta, f=silder$zeta)
 fitted_df <- data.frame(test_ages, log(fitted_vals), year_id=2020)
 time_plot(df, 1) + geom_line(aes(test_ages, log.fitted_vals.), fitted_df)
-fitted_df$log.fitted_vals. <- fitted_df$log.fitted_vals. + silder$age_fixed
+fitted_df$log.fitted_vals. <- fitted_df$log.fitted_vals. + silder$epsilon_age
 time_plot(df, 1) + geom_line(aes(test_ages, log.fitted_vals.), fitted_df)
+
+df2 <- df
+df2$log_rate <- silder$log_rate_mort_hat
+time_plot(df2, 1)
