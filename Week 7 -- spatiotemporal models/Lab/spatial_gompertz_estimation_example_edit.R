@@ -1,10 +1,19 @@
+rm(list=ls())
+library(INLA)
+library(TMB)
+library(RandomFields)
+library(RANN)
 
-
-setwd( "~/Documents/Classes/2016_Spatio-temporal_models/Week 7 -- spatiotemporal models/Lab/" )
+setwd( "~/Documents/Classes/2016_Spatio-temporal_models")
+setwd( "Week 7 -- spatiotemporal models/Lab/" )
+source( "./Sim_Gompertz_Fn.R" )
 
 #########################
 # Spatial Gompertz model
-# SEE: James T. Thorson, Hans Skaug, Kasper Kristensen, Andrew O. Shelton, Eric J. Ward, John Harms, Jim Benante. In press. The importance of spatial models for estimating the strength of density dependence. Ecology.
+# SEE: James T. Thorson, Hans Skaug, Kasper Kristensen, Andrew O. Shelton,
+# Eric J. Ward, John Harms, Jim Benante. In press.
+# The importance of spatial models for estimating the strength of 
+# density dependence. Ecology.
 #########################
 
 beta= 0.2
@@ -15,39 +24,31 @@ d_1 = seq(0,d_equil*2,length=1e4)
 d_2 = d_1 * exp(alpha) * exp( - beta*log(d_1))
 
 # Dynamics
-png( file="Gompertz_dynamics.png", width=8, height=4, res=200, units="in")
-  par( mfrow=c(1,2), mar=c(3,3.5,2,0), mgp=c(1.75,0.25,0), tck=-0.02)
-  plot( x=d_1, y=d_2, type="l", lwd=3, xlab=expression(Biomass[t]), 
-        ylab=expression(Biomass[t+1]), main="Production")
-  abline( a=0, b=1, lty="dotted")
-  # Log-dynamics
-  plot( x=log(d_1[-1]), y=log(d_2[-1]/d_1[-1]), type="l", lwd=3, 
-        xlab=expression(log(Biomass[t])), 
-        ylab=expression(log(Biomass[t+1]/Biomass[t])), main="log-Biomass ratio" )
-  abline( a=1, b=0, lty="dotted")
-dev.off()
+par(mfrow=c(1,2), mar=c(3,3.5,2,0), mgp=c(1.75,0.25,0), tck=-0.02)
+plot(x=d_1, y=d_2, type="l", lwd=3, xlab=expression(Biomass[t]), 
+     ylab=expression(Biomass[t+1]), main="Production")
+abline( a=0, b=1, lty="dotted")
+# Log-dynamics
+plot(x=log(d_1[-1]), y=log(d_2[-1]/d_1[-1]), type="l", lwd=3, 
+     xlab=expression(log(Biomass[t])), 
+     ylab=expression(log(Biomass[t+1]/Biomass[t])), main="log-Biomass ratio")
+abline( a=1, b=0, lty="dotted")
+
 
 ########################
 # Simulate and estimate
 ########################
 
-# load libraries
-library(INLA)
-library(TMB)
-library(RandomFields)
-
-source( "Sim_Gompertz_Fn.R" )
-
 # Read data
-# n_years=10; n_stations=100; SpatialScale=0.1; SD_O=0.5; SD_E=0.2; SD_extra=0; rho=0.8; logMeanDens=1; phi=NULL; Loc=NULL
-Sim_List = Sim_Gompertz_Fn( n_years=10, n_stations=100, SpatialScale=0.1, SD_O=0.4, SD_E=0.2, SD_extra=0, rho=0.5, logMeanDens=1, phi=0.0, Loc=NULL )
-DF = Sim_List[["DF"]]
-loc_xy = Sim_List[["Loc"]]
+Sim_List <- Sim_Gompertz_Fn(n_years=10, n_stations=100, SpatialScale=0.1, 
+                            SD_O=0.4, SD_E=0.2, SD_extra=0, rho=0.5, 
+                            logMeanDens=1, phi=0.0, Loc=NULL)
+DF <- Sim_List[["DF"]]
+loc_xy <- Sim_List[["Loc"]]
 
 # Reduce number of stations -- OPTIONAL
-n_knots = 50
-if( n_knots < nrow(loc_xy) ){
-  library(RANN)
+n_knots <- 50
+if(n_knots < nrow(loc_xy)){
   knots_xy = kmeans( x=loc_xy, centers=n_knots )
   # Modify data
   loc_xy = knots_xy$centers
@@ -55,11 +56,12 @@ if( n_knots < nrow(loc_xy) ){
 }
 
 # Build SPDE object using INLA (must pass mesh$idx$loc when supplying Boundary)
-mesh = inla.mesh.create( loc_xy )
+mesh = inla.mesh.create( loc_xy, refine=T  )
 spde = inla.spde2.matern( mesh )
 
+plot(mesh)
 # display stations
-#plot( x=loc_xy[,'x'], y=loc_xy[,'y'])
+points( x=loc_xy[,'x'], y=loc_xy[,'y'])
 
 
 ###################
@@ -86,7 +88,8 @@ Parameters = list(alpha=c(0.0), phi=0.0, log_tau_U=1.0, log_tau_O=1.0,
 Random = c("log_D_xt","Omega_input")
 
 # Make object
-obj <- MakeADFun(data=Data, parameters=Parameters, random=Random, hessian=FALSE, DLL=Version)
+obj <- MakeADFun(data=Data, parameters=Parameters, 
+                 random=Random, hessian=FALSE, DLL=Version)
 
 # Run optimizer
 start_time = Sys.time()
