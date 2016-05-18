@@ -78,20 +78,20 @@ download_mort_data <- function(location_id=NULL){
     df
 }
 
-infant_term <- function(x, N0=1, lambda=1){
-    N0 * exp(-1 * lambda * x)
+inf_term <- function(x, N0=1, lambda=-1, c=0){
+    N0 * exp(lambda * x) + c
 }
 
-ya_term <- function(x, a=-2, h=mean(x), k=0){
-    (x < h) * (a * (x - h)**2 + k) + (x >= h) * k
+logit_scaled <- function(x, eta, scale){
+    1 / (1 + exp(scale * (eta - x)))
 }
 
-logit_rho <- function(x, rho, scale=1){
-    (1 / (1 + exp(-scale * (rho + x))))
+ya_term <- function(x, eta=mean(x), scale=1, ceiling=1){
+    ceiling * logit_scaled(x, eta, scale)
 }
 
-sns_term <- function(x, m, b, rho){
-    logit_rho(x, rho) * m * x + b
+sns_term <- function(x, rho, m, b){
+    (m * x + b) * logit_scaled(x, eta=rho, scale=3)
 }
 
 gpz_log <- function(x, N0, lambda, a, k, h, m, b){

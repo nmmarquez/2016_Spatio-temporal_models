@@ -1,5 +1,10 @@
 #include <TMB.hpp>
 
+template<class Type>
+Type logit_scaled(Type x, Type switch_point, Type scale){
+    return 1. / (1. + exp(scale * (switch_point - x)));
+}
+
 // Space time
 template<class Type>
 Type objective_function<Type>::operator() ()
@@ -64,22 +69,22 @@ Type objective_function<Type>::operator() ()
     printf("%s\n", "make_predictions");
     Type N0 = exp(gpz[0]);
     Type lambda = -1. * exp(gpz[1]);
-    Type c = gpz[8];
-    Type a = -1. * exp(gpz[2]);
-    Type h = exp(gpz[3]);
-    Type k = gpz[4];
-    Type m = exp(gpz[5]);
-    Type b = gpz[6];
-    Type rho = exp(gpz[7]);
+    Type c = gpz[2];
+    Type eta = exp(gpz[3]);
+    Type ceiling = exp(gpz[4]);
+    Type scale = exp(gpz[5]);
+    Type m = gpz[6];
+    Type b = gpz[7];
+    Type rho = exp(gpz[8]);
     Type inf_term;
     Type ya_term;
     Type sns_prob;
     vector<Type> log_rate_mort_hat(N);
     for(int n=0; n<N; n++){
         sns_prob = 1. / (1. + exp(-1. * (-1. * rho + age[n])));
-        log_rate_mort_hat[n] = N0 * exp(lambda * age[n]) + c +  // infant term + intercept
-            exp(a * pow(age[n] - h, 2.) + k) * (1. - sns_prob) + // young adult term
-            sns_prob * (m * age[n] + b); // sns term + intercept
+        log_rate_mort_hat[n] = N0 * exp(lambda * age[n]) + c +  // infant term
+            ceiling * logit_scaled(age[n], eta, scale) + // young adult term
+            logit_scaled(age[n], eta=rho, scale=3.) * (m * age[n] + b); // sns term
     }
 
     printf("%s\n", "evaluate data likelihood");
@@ -91,12 +96,12 @@ Type objective_function<Type>::operator() ()
     // Reporting
     REPORT(N0);
     REPORT(lambda);
-    REPORT(a);
-    REPORT(h);
-    REPORT(k);
+    REPORT(c);
+    REPORT(eta);
+    REPORT(ceiling);
     REPORT(m);
     REPORT(b);
-    REPORT(c);
+    REPORT(scale);
     REPORT(rho);
     REPORT(sigma_obs);
     REPORT(nll);

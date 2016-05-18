@@ -5,10 +5,6 @@ setwd("~/Documents/Classes/2016_Spatio-temporal_models/mort_project/")
 source('./mort_viz/db_access.R')
 source("./mort_viz/utilities.R")
 
-sim_data <- function(x, a=.1, b=.1, c=.1, d=.1, f=.1){
-    a * exp(-1 * b * x) + c + d * exp(x * f)
-}
-
 if (!("usa_data.rda" %in% list.files())){
     df <- download_mort_data(102)
     save(df, file="./usa_data.rda")
@@ -18,8 +14,6 @@ load("./usa_data.rda")
 
 model <- "gpz_log"
 
-time_plot(df, 1)
-
 reload_model(model)
 
 df$age_group <- df$age_group_id - min(df$age_group_id)
@@ -28,6 +22,7 @@ df <- subset(df, sex_id == 1 & age_group_id < 21)
 option <- 0
 print <- TRUE
 model_name <- model
+time_plot(df, 1)
 
 run_model <- function(df, option=1, model_name=model, print=F){
     N_ <- nrow(df)
@@ -79,11 +74,17 @@ run_model <- function(df, option=1, model_name=model, print=F){
     Report
 }
 
-#gpzm_sub <- run_model(subset(df, age_mean > 25), option=0)
-#gpzm <- run_model(df, option=0)
-#silder <- run_model(subset(df, age_mean < 80), option=1)
 silder <- run_model(subset(df, age_group_id < 21), option=0, print=T)
 
+
+df$log_rate_hat <- inf_term(df$age_mean, N0=silder$N0, 
+                            lambda=silder$lambda, c=silder$c)
+time_plot(df, 1, preds=T)
+
+df$log_rate_hat <- df$log_rate_hat + ya_term(df$age_mean, eta=silder$eta, 
+                                             scale=silder$scale,
+                                             ceiling=silder$ceiling)
+time_plot(df, 1, preds=T)
 
 df$log_rate_hat <- silder$log_rate_mort_hat
 time_plot(df, 1, preds=T)
