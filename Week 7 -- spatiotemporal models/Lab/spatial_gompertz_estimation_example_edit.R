@@ -56,7 +56,7 @@ if(n_knots < nrow(loc_xy)){
 }
 
 # Build SPDE object using INLA (must pass mesh$idx$loc when supplying Boundary)
-mesh = inla.mesh.create( loc_xy, refine=T  )
+mesh = inla.mesh.create( loc_xy, refine=T )
 spde = inla.spde2.matern( mesh )
 
 plot(mesh)

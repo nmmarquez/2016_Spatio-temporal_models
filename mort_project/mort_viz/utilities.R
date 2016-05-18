@@ -78,8 +78,30 @@ download_mort_data <- function(location_id=NULL){
     df
 }
 
+infant_term <- function(x, N0=1, lambda=1){
+    N0 * exp(-1 * lambda * x)
+}
 
-age_plot <- function(df, sex_id){
+ya_term <- function(x, a=-2, h=mean(x), k=0){
+    (x < h) * (a * (x - h)**2 + k) + (x >= h) * k
+}
+
+logit_rho <- function(x, rho, scale=1){
+    (1 / (1 + exp(-scale * (rho + x))))
+}
+
+sns_term <- function(x, m, b, rho){
+    logit_rho(x, rho) * m * x + b
+}
+
+gpz_log <- function(x, N0, lambda, a, k, h, m, b){
+    infant_term(x, N0, lambda) + 
+        ya_term(x, a, h, k) * (1 - logit_rho(x, rho)) + 
+        sns_term(x, m, b)
+}
+
+
+age_plot <- function(df, sex_id, preds=FALSE){
     sub_df <- df[df$sex_id == sex_id,]
     sub_df <- sub_df[order(sub_df$age_mean, sub_df$year_id),]
     plot.age <- ggplot(sub_df, aes(x=year_id, y=log_rate, 
@@ -89,10 +111,16 @@ age_plot <- function(df, sex_id){
     plot.age <- plot.age + scale_color_gradientn("Age",colours=rainbow(7)) + 
         theme(legend.margin=unit(-0.02,"npc"), legend.text=element_text(size=8),
               text = element_text(size=20))
+    if(preds){
+        plot.age <- plot.age + geom_path(data=sub_df, 
+                                         aes(x=year_id, y=log_rate_hat, 
+                                             colour=age_mean, group=age_mean),
+                                         linetype="dashed")
+    }
     plot.age
 }
 
-time_plot <- function(df, sex_id){
+time_plot <- function(df, sex_id, preds=FALSE){
     sub_df <- df[df$sex_id == sex_id,]
     sub_df <- sub_df[order(sub_df$age_mean, sub_df$year_id),]
     plot.time <- ggplot(sub_df, aes(x=age_mean, y=log_rate, color=year_id, 
@@ -105,6 +133,12 @@ time_plot <- function(df, sex_id){
               legend.title.align=1,
               legend.background = element_rect(fill="transparent"),
               text = element_text(size=20))
+    if(preds){
+        plot.time <- plot.time + geom_path(data=sub_df, 
+                                         aes(x=age_mean, y=log_rate_hat, 
+                                             colour=year_id, group=year_id),
+                                         linetype="dashed")
+    }
     plot.time
 }
 

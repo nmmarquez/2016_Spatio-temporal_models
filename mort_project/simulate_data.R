@@ -16,7 +16,7 @@ if (!("usa_data.rda" %in% list.files())){
 
 load("./usa_data.rda")
 
-model <- "gpz"
+model <- "gpz_log"
 
 time_plot(df, 1)
 
@@ -24,7 +24,10 @@ reload_model(model)
 
 df$age_group <- df$age_group_id - min(df$age_group_id)
 df$time_group <- df$year_id - min(df$year_id)
-df <- subset(df, sex_id == 1)
+df <- subset(df, sex_id == 1 & age_group_id < 21)
+option <- 0
+print <- TRUE
+model_name <- model
 
 run_model <- function(df, option=1, model_name=model, print=F){
     N_ <- nrow(df)
@@ -52,8 +55,10 @@ run_model <- function(df, option=1, model_name=model, print=F){
         Map[["logit_rho_time2"]] <- factor(NA)
         Random <- c("epsilon_age", "epsilon_time")
     }
+    Random <- NULL
     dyn.load(dynlib(model_name))
-    Params <- list(gpz=rep(0, 5), log_sigma_obs=0, logit_rho_time=0,
+    par_num <- ifelse(model == "gpz", 5, 9)
+    Params <- list(gpz=rep(0, par_num), log_sigma_obs=0, logit_rho_time=0,
                    epsilon_age=rep(0, length(unique(df$age_group))),
                    epsilon_time=rep(0, length(unique(df$time_group))),
                    logit_rho_age=0, logit_rho_age2=0, logit_rho_time2=0,
@@ -77,16 +82,8 @@ run_model <- function(df, option=1, model_name=model, print=F){
 #gpzm_sub <- run_model(subset(df, age_mean > 25), option=0)
 #gpzm <- run_model(df, option=0)
 #silder <- run_model(subset(df, age_mean < 80), option=1)
-silder <- run_model(df, option=4, print=T)
+silder <- run_model(subset(df, age_group_id < 21), option=0, print=T)
 
-test_ages <- sort(unique(df$age_mean))
-fitted_vals <- sim_data(test_ages, a=silder$alpha, b=silder$beta,
-                         c=silder$gamma, d=silder$delta, f=silder$zeta)
-fitted_df <- data.frame(test_ages, log(fitted_vals), year_id=2020)
-time_plot(df, 1) + geom_line(aes(test_ages, log.fitted_vals.), fitted_df)
-fitted_df$log.fitted_vals. <- fitted_df$log.fitted_vals. + silder$epsilon_age
-time_plot(df, 1) + geom_line(aes(test_ages, log.fitted_vals.), fitted_df)
 
-df2 <- df
-df2$log_rate <- silder$log_rate_mort_hat
-time_plot(df2, 1)
+df$log_rate_hat <- silder$log_rate_mort_hat
+time_plot(df, 1, preds=T)
