@@ -5,6 +5,8 @@ setwd("~/Documents/Classes/2016_Spatio-temporal_models/mort_project/")
 source('./mort_viz/db_access.R')
 source("./mort_viz/utilities.R")
 
+reload_model(model)
+
 if (!("usa_data.rda" %in% list.files())){
     df <- download_mort_data(102)
     save(df, file="./usa_data.rda")
@@ -14,11 +16,9 @@ load("./usa_data.rda")
 
 model <- "gpz_log"
 
-reload_model(model)
-
 df$age_group <- df$age_group_id - min(df$age_group_id)
 df$time_group <- df$year_id - min(df$year_id)
-df <- subset(df, sex_id == 1 & age_group_id < 21)
+df <- subset(df, sex_id == 1 & age_mean <=15)
 option <- 0
 print <- TRUE
 model_name <- model
@@ -52,7 +52,7 @@ run_model <- function(df, option=1, model_name=model, print=F){
     }
     Random <- NULL
     dyn.load(dynlib(model_name))
-    par_num <- ifelse(model == "gpz", 5, 9)
+    par_num <- ifelse(model == "gpz", 5, 3)
     Params <- list(gpz=rep(0, par_num), log_sigma_obs=0, logit_rho_time=0,
                    epsilon_age=rep(0, length(unique(df$age_group))),
                    epsilon_time=rep(0, length(unique(df$time_group))),
@@ -74,7 +74,7 @@ run_model <- function(df, option=1, model_name=model, print=F){
     Report
 }
 
-silder <- run_model(subset(df, age_group_id < 21), option=0, print=T)
+silder <- run_model(df, option=0, print=T)
 
 
 df$log_rate_hat <- inf_term(df$age_mean, N0=silder$N0, 

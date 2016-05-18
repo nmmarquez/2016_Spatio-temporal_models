@@ -70,21 +70,20 @@ Type objective_function<Type>::operator() ()
     Type N0 = exp(gpz[0]);
     Type lambda = -1. * exp(gpz[1]);
     Type c = gpz[2];
-    Type eta = exp(gpz[3]);
-    Type ceiling = exp(gpz[4]);
-    Type scale = exp(gpz[5]);
-    Type m = gpz[6];
-    Type b = gpz[7];
-    Type rho = exp(gpz[8]);
+    //Type eta = exp(gpz[3]);
+    //Type ceiling = exp(gpz[4]);
+    //Type scale = exp(gpz[5]);
+    //Type m = gpz[6];
+    //Type b = gpz[7];
+    //Type rho = exp(gpz[8]);
     Type inf_term;
     Type ya_term;
     Type sns_prob;
     vector<Type> log_rate_mort_hat(N);
     for(int n=0; n<N; n++){
-        sns_prob = 1. / (1. + exp(-1. * (-1. * rho + age[n])));
-        log_rate_mort_hat[n] = N0 * exp(lambda * age[n]) + c +  // infant term
-            ceiling * logit_scaled(age[n], eta, scale) + // young adult term
-            logit_scaled(age[n], eta=rho, scale=3.) * (m * age[n] + b); // sns term
+        log_rate_mort_hat[n] = N0 * exp(lambda * age[n]) + c; //+  // infant term
+            //ceiling * logit_scaled(age[n], eta, scale) + // young adult term
+            //logit_scaled(age[n], eta=rho, scale=3.) * (m * age[n] + b); // sns term
     }
 
     printf("%s\n", "evaluate data likelihood");
@@ -97,12 +96,12 @@ Type objective_function<Type>::operator() ()
     REPORT(N0);
     REPORT(lambda);
     REPORT(c);
-    REPORT(eta);
-    REPORT(ceiling);
-    REPORT(m);
-    REPORT(b);
-    REPORT(scale);
-    REPORT(rho);
+//    REPORT(eta);
+//    REPORT(ceiling);
+//    REPORT(m);
+//    REPORT(b);
+//    REPORT(scale);
+//    REPORT(rho);
     REPORT(sigma_obs);
     REPORT(nll);
     REPORT(epsilon_age);
