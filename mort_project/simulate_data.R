@@ -1,10 +1,12 @@
 rm(list=ls())
 library(TMB)
 library(INLA)
+
 setwd("~/Documents/Classes/2016_Spatio-temporal_models/mort_project/")
 source('./mort_viz/db_access.R')
 source("./mort_viz/utilities.R")
 
+model <- "gpz_log"
 reload_model(model)
 
 if (!("usa_data.rda" %in% list.files())){
@@ -14,15 +16,13 @@ if (!("usa_data.rda" %in% list.files())){
 
 load("./usa_data.rda")
 
-model <- "gpz_log"
-
+df <- subset(df, sex_id == 2 & age_mean >=4 & age_mean<=100)
 df$age_group <- df$age_group_id - min(df$age_group_id)
 df$time_group <- df$year_id - min(df$year_id)
-df <- subset(df, sex_id == 1 & age_mean <=15)
 option <- 0
 print <- TRUE
 model_name <- model
-time_plot(df, 1)
+time_plot(df, 2)
 
 run_model <- function(df, option=1, model_name=model, print=F){
     N_ <- nrow(df)
@@ -50,9 +50,9 @@ run_model <- function(df, option=1, model_name=model, print=F){
         Map[["logit_rho_time2"]] <- factor(NA)
         Random <- c("epsilon_age", "epsilon_time")
     }
-    Random <- NULL
+    Random <- c('gpz')
     dyn.load(dynlib(model_name))
-    par_num <- ifelse(model == "gpz", 5, 3)
+    par_num <- ifelse(model == "gpz", 5, 7)
     Params <- list(gpz=rep(0, par_num), log_sigma_obs=0, logit_rho_time=0,
                    epsilon_age=rep(0, length(unique(df$age_group))),
                    epsilon_time=rep(0, length(unique(df$time_group))),
@@ -60,6 +60,13 @@ run_model <- function(df, option=1, model_name=model, print=F){
                    epsilon_age_time=matrix(0, nrow=A_, T_))
     Data <- list(log_rate_mort=df$log_rate, age=df$age_mean, option=option,
                  age_group=df$age_group, time_group=df$time_group)
+    Params$gpz[[1]] <- 3
+    Params$gpz[[2]] <- log(16) 
+    Params$gpz[[3]] <- log(1)
+    Params$gpz[[4]] <- log(.7) 
+    Params$gpz[[5]] <- .0815
+    Params$gpz[[6]] <- -2.2
+    Params$gpz[[7]] <- log(10)
     Obj <- MakeADFun(data=Data, parameters=Params, DLL=model_name,
                      silent=!print, map=Map, random = Random)
     Obj$env$tracemgc <- print
@@ -77,14 +84,36 @@ run_model <- function(df, option=1, model_name=model, print=F){
 silder <- run_model(df, option=0, print=T)
 
 
-df$log_rate_hat <- inf_term(df$age_mean, N0=silder$N0, 
-                            lambda=silder$lambda, c=silder$c)
-time_plot(df, 1, preds=T)
-
-df$log_rate_hat <- df$log_rate_hat + ya_term(df$age_mean, eta=silder$eta, 
-                                             scale=silder$scale,
-                                             ceiling=silder$ceiling)
-time_plot(df, 1, preds=T)
-
 df$log_rate_hat <- silder$log_rate_mort_hat
+time_plot(df, 2, preds=T)
+sum(-1 * dnorm(df$log_rate, df$log_rate_hat, silder$sigma_obs, log=T))# 188
+
+silder$eta
+silder$rho
+
+df$log_rate_hat <-  inf_term(df$age_mean, N0=10, lambda=-10, c=3.5) + 
+    ya_term(df$age_mean, eta=16, scale=.5, ceiling=5.1-3.5)
+
+c <- 3.3
+df$log_rate_hat <-  c + 
+    ya_term(df$age_mean, eta=16, scale=.5, ceiling=5.15-3.3) + 
+    sns_term(df$age_mean, rho=34, m=.0815, b=-2.7)
+
 time_plot(df, 1, preds=T)
+
+c <- 3
+df$log_rate_hat <-  c + 
+    ya_term(df$age_mean, eta=16, scale=.7, ceiling=4-c) + 
+    sns_term(df$age_mean, rho=26, m=.0815, b=-2.2)
+
+time_plot(df, 2, preds=T)
+
+sum(-1 * dnorm(df$log_rate, df$log_rate_hat, silder$sigma_obs, log=T))
+
+
+df2 <- df
+df2$log_rate <- rnorm(df2$log_rate_hat, df2$log_rate_hat, .1)
+time_plot(df2, 1)
+silder2 <- run_model(df2, option=0, print=T)
+df2$log_rate_hat <- silder2$log_rate_mort_hat
+time_plot(df2, 1, preds=T)
