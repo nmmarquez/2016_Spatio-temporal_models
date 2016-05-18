@@ -19,7 +19,7 @@ beta0 = 3
 prob_missing = 0.2
 
 # Simulate spatial process
-RMmodel = RMgauss(var=Sigma2, scale=Scale)
+RMmodel = RMexp(var=Sigma2, scale=Scale)
 epsilon_xy = array(RFsimulate(model=RMmodel, x=loc_xy[,'x'], y=loc_xy[,'y'])@data[,1], dim=Dim)
 image( z=epsilon_xy )
 
@@ -42,8 +42,8 @@ dyn.load( dynlib("autoregressive_grid_V1") )
 Data = list("Options_vec"=c(0), "c_xy"=c_xy )
 Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_xy", DLL="autoregressive_grid_V1" )
 # Optimize
-Opt = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
-par0 = Opt$par
+Opt0 = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
+par0 = Opt0$par
 h0 = Obj$env$spHess(random=TRUE)
 report0 = Obj$report()
 sd0 = sdreport( Obj, bias.correct=TRUE )
@@ -53,8 +53,8 @@ sd0 = sdreport( Obj, bias.correct=TRUE )
 Data = list("Options_vec"=c(1), "c_xy"=c_xy )
 Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_xy", DLL="autoregressive_grid_V1" )
 # Optimize
-Opt = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
-par1 = Opt$par
+Opt1 = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
+par1 = Opt1$par
 h1 = Obj$env$spHess(random=TRUE)
 report1 = Obj$report()
 sd1 = sdreport( Obj, bias.correct=TRUE )
@@ -64,9 +64,32 @@ sd1 = sdreport( Obj, bias.correct=TRUE )
 Data = list("Options_vec"=c(3), "c_xy"=c_xy )
 Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_xy", DLL="autoregressive_grid_V1" )
 # Optimize
-Opt = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
-par3 = Opt$par
+Opt3 = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
+par3 = Opt3$par
 h3 = Obj$env$spHess(random=TRUE)
 report3 = Obj$report()
 sd3 = sdreport( Obj, bias.correct=TRUE )
 
+##############
+# Experiments
+# Comparing precision matrix in R using different techniques
+##############
+
+AR1_precision = function( distmat, rho=0.5 ){
+  Q = ifelse( as.matrix(distmat)==1, -rho, 0)
+  diag(Q) = 1+rho^2
+  return(Q)
+}
+
+library(Matrix)
+rho = plogis( par1['logit_rho'])
+
+# Make input matrices
+G0 = Matrix( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==0,1,0) )
+G1 = Matrix( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==1,1,0) )
+G2 = Matrix( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==sqrt(2),1,0) )
+# Compare kronecker and analytic formulae
+rho = 0.5
+head( G0*(1+rho^2)^2 + G1*(1+rho^2)*(-rho) + G2*rho^2 )
+head( kronecker( AR1_precision(dist(1:Dim[1],diag=TRUE,upper=TRUE),rho=rho), AR1_precision(dist(1:Dim[2],diag=TRUE,upper=TRUE),rho=rho) ))
+head( Matrix( report1$Q_zz ) *  )

@@ -100,7 +100,7 @@ Type objective_function<Type>::operator() ()
   }
   //// Calculate using built-in TMB functions
   if( Options_vec(0)==3 ){
-    jnll_comp(1) += SCALE( SEPARABLE(AR1(rho),AR1(rho)), pow(sigma2 / (1-pow(rho,2)),0.5))( epsilon_xy );
+    jnll_comp(1) += SCALE( SEPARABLE(AR1(rho),AR1(rho)), pow(sigma2,0.5) / pow(1-pow(rho,2),0.5) / pow(1-pow(rho,2),0.5) )( epsilon_xy );      // Include "pow(1-pow(rho,2),0.5)" twice for 2D unit variance
   }
 
   // Probability of data conditional on random effects
