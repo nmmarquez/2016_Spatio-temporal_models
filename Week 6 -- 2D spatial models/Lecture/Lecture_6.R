@@ -5,6 +5,7 @@ setwd( "C:/Users/James.Thorson/Desktop/Project_git/2016_Spatio-temporal_models/W
 
 library(TMB)
 library(RandomFields)
+library(Matrix)
 library(TMBdebug)
 
 ###################
@@ -32,6 +33,11 @@ for(y in 1:ncol(c_xy)){
 }}
 true_abundance =  sum( exp(beta0 + epsilon_xy) )
 
+# Generate sparse matrices for precision matrix of 2D AR1 process
+M0 = as( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==0,1,0), "dgTMatrix" )
+M1 = as( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==1,1,0), "dgTMatrix" )
+M2 = as( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==sqrt(2),1,0), "dgTMatrix" )
+
 # Compile
 Params = list( "beta0"=0, "ln_sigma2"=0, "logit_rho"=0, "epsilon_xy"=array(rnorm(prod(dim(loc_xy))),dim=dim(epsilon_xy)) )
 compile( "autoregressive_grid_V1.cpp" )
@@ -39,7 +45,7 @@ dyn.load( dynlib("autoregressive_grid_V1") )
 
 ######## Version 0 -- Sweep downstream
 # Build object
-Data = list("Options_vec"=c(0), "c_xy"=c_xy )
+Data = list("Options_vec"=c(0), "c_xy"=c_xy, "M0"=M0, "M1"=M1, "M2"=M2 )
 Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_xy", DLL="autoregressive_grid_V1" )
 # Optimize
 Opt0 = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
@@ -50,7 +56,7 @@ sd0 = sdreport( Obj, bias.correct=TRUE )
 
 ######## Version 1 -- Analytic precision matrix
 # Build object
-Data = list("Options_vec"=c(1), "c_xy"=c_xy )
+Data = list("Options_vec"=c(1), "c_xy"=c_xy, "M0"=M0, "M1"=M1, "M2"=M2 )
 Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_xy", DLL="autoregressive_grid_V1" )
 # Optimize
 Opt1 = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
@@ -61,7 +67,7 @@ sd1 = sdreport( Obj, bias.correct=TRUE )
 
 ######## Version 3 -- Built-in function for AR process
 # Build object
-Data = list("Options_vec"=c(3), "c_xy"=c_xy )
+Data = list("Options_vec"=c(3), "c_xy"=c_xy, "M0"=M0, "M1"=M1, "M2"=M2 )
 Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_xy", DLL="autoregressive_grid_V1" )
 # Optimize
 Opt3 = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
@@ -70,26 +76,14 @@ h3 = Obj$env$spHess(random=TRUE)
 report3 = Obj$report()
 sd3 = sdreport( Obj, bias.correct=TRUE )
 
-##############
-# Experiments
-# Comparing precision matrix in R using different techniques
-##############
+######## Version 4 -- Assemble sparse precision matrix using external computation (probably the easiest to generalize)
+# Build object
+Data = list("Options_vec"=c(3), "c_xy"=c_xy, "M0"=M0, "M1"=M1, "M2"=M2 )
+Obj = MakeADFun( data=Data, parameters=Params, random="epsilon_xy", DLL="autoregressive_grid_V1" )
+# Optimize
+Opt4 = nlminb( start=Obj$par, objective=Obj$fn, gradient=Obj$gr )
+par4 = Opt4$par
+h4 = Obj$env$spHess(random=TRUE)
+report4 = Obj$report()
+sd4 = sdreport( Obj, bias.correct=TRUE )
 
-AR1_precision = function( distmat, rho=0.5 ){
-  Q = ifelse( as.matrix(distmat)==1, -rho, 0)
-  diag(Q) = 1+rho^2
-  return(Q)
-}
-
-library(Matrix)
-rho = plogis( par1['logit_rho'])
-
-# Make input matrices
-G0 = Matrix( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==0,1,0) )
-G1 = Matrix( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==1,1,0) )
-G2 = Matrix( ifelse(as.matrix(dist(loc_xy,diag=TRUE,upper=TRUE))==sqrt(2),1,0) )
-# Compare kronecker and analytic formulae
-rho = 0.5
-head( G0*(1+rho^2)^2 + G1*(1+rho^2)*(-rho) + G2*rho^2 )
-head( kronecker( AR1_precision(dist(1:Dim[1],diag=TRUE,upper=TRUE),rho=rho), AR1_precision(dist(1:Dim[2],diag=TRUE,upper=TRUE),rho=rho) ))
-head( Matrix( report1$Q_zz ) *  )
