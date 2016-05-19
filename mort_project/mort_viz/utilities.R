@@ -53,6 +53,38 @@ age_df_download <- function(){
     query_cod_db(call)
 }
 
+admin_queens <- function(rho=.7){
+    call <- '
+    SELECT location_id, location_name, parent_id
+    FROM shared.location_hierarchy_history
+    WHERE location_set_version_id= 71 AND location_type="admin0"
+    '
+    df <- query_cod_db(call)
+    df$parent_id[df$parent_id == 70] <- 21
+    df$parent_id[df$parent_id == 100] <- 73
+    df$parent_id[df$parent_id == 134] <- 124
+    df <- df[order(df$parent_id, df$location_id),]
+    mat <- sapply(1:nrow(df), function(x)
+        as.numeric(df$parent_id[x] == df$parent_id))
+    diag(mat) <- 0
+    n_delta_i <- rowSums(mat)
+    mat <- -1 * mat
+    diag(mat) <- n_delta_i
+    mat
+}
+
+
+Q_ar1 <- function(N, sigma=1, rho=.7){
+    Q <- matrix(0, nrow=N, ncol=N)
+    Q[1,1] <- 1 + rho**2
+    for(i in 2:N){
+        Q[i,i] <- 1 + rho**2
+        Q[i-1,i] <- -1 * rho
+        Q[i,i-1] <- -1 * rho
+    }
+    (1 / sigma**2) * Q
+}
+
 
 download_mort_data <- function(location_id=NULL){
     if (is.null(location_id)){

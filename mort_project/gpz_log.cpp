@@ -67,16 +67,16 @@ Type objective_function<Type>::operator() ()
     }
 
     printf("%s\n", "make_predictions");
-    //Type N0 = exp(gpz[0]);
-    //Type lambda = -1. * exp(gpz[1]);
-    Type c = gpz[0];
-    Type eta = exp(gpz[1]);
+    Type N0 = exp(gpz[0]);
+    Type lambda = -1. * exp(gpz[1]);
+    Type c = gpz[2];
+    //Type eta = exp(gpz[1]);
     //Type eta = 16.;
-    Type ceiling = exp(gpz[2]);
-    Type scale = exp(gpz[3]);
-    Type m = gpz[4];
-    Type b = gpz[5];
-    Type rho = eta + exp(gpz[6]);
+    //Type ceiling = exp(gpz[2]);
+    //Type scale = exp(gpz[3]);
+    Type m = gpz[3];
+    Type b = gpz[4];
+    Type rho = exp(gpz[5]);
     // Type rho = 26.;
     Type inf_term;
     Type ya_term;
@@ -84,8 +84,8 @@ Type objective_function<Type>::operator() ()
     vector<Type> log_rate_mort_hat(N);
     for(int n=0; n<N; n++){
         // N0 * exp(lambda * age[n])
-        log_rate_mort_hat[n] = c +  // infant term
-            ceiling * logit_scaled(age[n], eta, scale) + //+ // young adult term
+        log_rate_mort_hat[n] = (N0 * exp(lambda * age[n]) + c) * (1 - logit_scaled(age[n], rho, Type(3.))) +  // infant term
+            // ceiling * logit_scaled(age[n], eta, scale) + //+ // young adult term
             logit_scaled(age[n], rho, Type(3.)) * (m * age[n] + b); // sns term
     }
 
@@ -96,14 +96,14 @@ Type objective_function<Type>::operator() ()
 
     printf("%s\n", "Report values");
     // Reporting
-//    REPORT(N0);
-//    REPORT(lambda);
+    REPORT(N0);
+    REPORT(lambda);
     REPORT(c);
-    REPORT(eta);
-    REPORT(ceiling);
+//     REPORT(eta);
+//     REPORT(ceiling);
+//     REPORT(scale);
     REPORT(m);
     REPORT(b);
-    REPORT(scale);
     REPORT(rho);
     REPORT(sigma_obs);
     REPORT(nll);
