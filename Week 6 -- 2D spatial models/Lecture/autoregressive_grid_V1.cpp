@@ -39,6 +39,12 @@ Type objective_function<Type>::operator() ()
   // Data
   DATA_MATRIX( c_xy );
 
+  // Sparse matrices for forming the AR precision matrix (Version #4 below)
+  // Q = M0*(1+rho^2)^2 + M1*(1+rho^2)*(-rho) + M2*rho^2
+  DATA_SPARSE_MATRIX(M0);
+  DATA_SPARSE_MATRIX(M1);
+  DATA_SPARSE_MATRIX(M2);
+
   // Parameters
   PARAMETER( beta0 );
   PARAMETER( ln_sigma2 );
@@ -97,10 +103,18 @@ Type objective_function<Type>::operator() ()
       Count++;
     }}
     jnll_comp(1) -= dmvnorm( epsilon_z, Q_zz, true );
+    //jnll_comp(1) += GMRF(Q_zz)( epsilon_z );
   }
   //// Calculate using built-in TMB functions
   if( Options_vec(0)==3 ){
-    jnll_comp(1) += SCALE( SEPARABLE(AR1(rho),AR1(rho)), pow(sigma2 / (1-pow(rho,2)),0.5))( epsilon_xy );
+    jnll_comp(1) += SCALE( SEPARABLE(AR1(rho),AR1(rho)), pow(sigma2,0.5) / pow(1-pow(rho,2),0.5) / pow(1-pow(rho,2),0.5) )( epsilon_xy );      // Include "pow(1-pow(rho,2),0.5)" twice for 2D unit variance
+  }
+  // Sparse precision matrix using external computation of constituent matrices
+  if( Options_vec(0)==4 ){
+    Eigen::SparseMatrix<Type> Q_zz = ( M0*pow(1+pow(rho,2),2) + M1*(1+pow(rho,2))*(-rho) + M2*pow(rho,2) ) / sigma2;
+    jnll_comp(1) += GMRF(Q_zz)( epsilon_xy );
+    //Eigen::SparseMatrix<Type> Q_zz = ( M0*pow(1+pow(rho,2),2) + M1*(1+pow(rho,2))*(-rho) + M2*pow(rho,2) );
+    //jnll_comp(1) += SCALE( GMRF(Q_zz), pow(sigma2,-0.5) )( epsilon_xy );
   }
 
   // Probability of data conditional on random effects
