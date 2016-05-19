@@ -17,6 +17,7 @@ if (!("data.rda" %in% list.files())){
 
 load("./data.rda")
 
+# load in data and only look at 1 sex ages under 100
 df <- subset(df, sex_id == 1 & age_mean<=100 & year_id>=1990)
 df$age_group <- df$age_group_id - min(df$age_group_id)
 df$time_group <- df$year_id - min(df$year_id)
@@ -25,6 +26,7 @@ print <- TRUE
 model_name <- model
 time_plot(df, 1)
 
+# run model
 run_model <- function(df, option=1, model_name=model, print=F){
     N_ <- nrow(df)
     T_ <- length(unique(df$time_group))
@@ -77,13 +79,13 @@ run_model <- function(df, option=1, model_name=model, print=F){
 
 silder <- run_model(df, option=0, print=T)
 
-
+# get the global values to use for simulation
 df$log_rate_hat <- silder$log_rate_mort_hat
 time_plot(df, 1, preds=T)
 sum(-1 * dnorm(df$log_rate, df$log_rate_hat, silder$sigma_obs, log=T))# 188
-print(silder$rho)
-print(silder$m)
-print(silder$b)
+print(silder$N0)
+print(silder$c)
+print(silder$lambda)
 print(silder$rho)
 print(silder$m)
 print(silder$b)
@@ -103,12 +105,23 @@ print(silder$b)
 
 
 # fixed effects
+
+# 3.013569
 rho <- silder$rho # age at which young effects trade off for old effects
+
+# 7.056609
 c <- silder$c # base level mortality (log_rate) when most protected
+
+# 3.517876
 b <- silder$b # adjustment term sns death rates
 
-N0 <- silder$b # this value plus c is the instantaneous death rate at birth
+# 4.941424
+N0 <- silder$N0 # this value plus c is the instantaneous death rate at birth
+
+# -22.19277
 lambda <- silder$lambda # the slope of decline for early life death
+
+# 0.06887044
 m <- silder$m # the slope of increase for senesence moratlity
 
 Q_geo <- admin_queens() # precision matrix for location
@@ -150,11 +163,11 @@ source("~/Documents/r_shared/woodson_mapping_suite/plot_data.R")
 source("~/Documents/r_shared/woodson_mapping_suite/woodson_pallettes.R")
 
 series_map(chloropleth_map=gbd15[gbd15@data$level==3,],
-           data=data.table(df3),
+           data=data.table(subset(df3, age_group_id == 12)),
            geog_id="location_id",
            variable="log_rate",
            map_title="Log Mortality Rate",
            series_dimension="year_id",
-           series_sequence=c(1990,2000,2010),
-           color_ramp=rev(woodson_pallettes("cool_toned")),
-           histogram=TRUE)
+           series_sequence=c(2005,2010),
+           color_ramp=woodson_pallettes("thanksgiving"),
+           histogram=FALSE)
