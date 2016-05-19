@@ -25,6 +25,8 @@ Type objective_function<Type>::operator() ()
   PARAMETER_MATRIX(beta_jp);
   PARAMETER_VECTOR(Loadings_vec);
   PARAMETER(log_kappa);
+
+  // Random effect
   PARAMETER_ARRAY(Omega_xf);
 
   //
@@ -49,7 +51,7 @@ Type objective_function<Type>::operator() ()
   }
 
   // Spatial variables
-  Type log_tau = log(1 / (exp(log_kappa) * sqrt(4*M_PI)) );  // Ensures that MargSD = 1
+  Type log_tau = log( 1 / (exp(log_kappa) * sqrt(4*M_PI)) );  // Ensures that MargSD = 1
   Type Range = sqrt(8) / exp( log_kappa );
   Eigen::SparseMatrix<Type> Q = exp(log_kappa*4)*M0 + Type(2.0)*exp(log_kappa*2)*M1 + M2;
   for(int f=0; f<n_f; f++){
