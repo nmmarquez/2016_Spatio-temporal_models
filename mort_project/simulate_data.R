@@ -90,20 +90,6 @@ print(silder$rho)
 print(silder$m)
 print(silder$b)
 
-df_sub <- subset(df, location_id == 101)
-
-silder <- run_model(df_sub, option=0, print=T)
-
-
-df_sub$log_rate_hat <- silder$log_rate_mort_hat
-time_plot(df_sub, 1, preds=T)
-sum(-1 * dnorm(df$log_rate, df$log_rate_hat, silder$sigma_obs, log=T))# 188
-
-print(silder$rho)
-print(silder$m)
-print(silder$b)
-
-
 # fixed effects
 
 # 3.013569
@@ -126,7 +112,7 @@ m <- silder$m # the slope of increase for senesence moratlity
 
 Q_geo <- admin_queens() # precision matrix for location
 Q_age <- Q_ar1(length(unique(df$age_group_id))) # AR1 on age groups
-Q_time <- Q_ar1(length(unique(df$year_id))) # AR1 on time
+Q_time <- Q_ar1(length(unique(df$year_id)), rho=1, sigma=.1) # AR1 on time
 Q_geo_age <- kronecker(Q_geo, Q_age) # kronecker product geo and age
 Q_geo_time <- kronecker(Q_geo, Q_time) # kronecker product geo and time
 
@@ -152,17 +138,21 @@ df3 <- left_join(left_join(left_join(df3, geo_ran), geo_time_ran), geo_age_ran)
 df3$log_rate_hat <- (N0 * exp(lambda * df3$age_mean) + c) *
     (1 - logit_scaled(df3$age_mean, rho, 3)) + 
     logit_scaled(df3$age_mean, rho, 3) * (m * df3$age_mean + b)
+
 # random terms added (geo, time, age)
 df3$log_rate <- df3$log_rate_hat + df3$re_geo + df3$re_geo_time + df3$re_geo_age
-time_plot(subset(df3, location_id == 101), 1, preds=T)
-multiplot(time_plot(subset(df3, location_id == 101), 1), time_plot(subset(df3, location_id == 102), 1), 
-          time_plot(subset(df3, location_id == 6), 1), time_plot(subset(df3, location_id == 7), 1), cols=2)
+time_plot(subset(df3, location_id == 527), 1, preds=T)
+multiplot(time_plot(subset(df3, location_id == 527), 1), time_plot(subset(df3, location_id == 531), 1), 
+          time_plot(subset(df3, location_id == 530), 1), time_plot(subset(df3, location_id == 532), 1), cols=2)
 
 load("./gbd_shapefile/gbd15.rdata")
 source("~/Documents/r_shared/woodson_mapping_suite/plot_data.R")
 source("~/Documents/r_shared/woodson_mapping_suite/woodson_pallettes.R")
 
-series_map(chloropleth_map=gbd15[gbd15@data$level==3,],
+usa <- gbd15[gbd15$parent_id == 102 & 
+                 !(gbd15$loc_name %in% c("Alaska", "Hawaii")),]
+
+series_map(chloropleth_map=usa,
            data=data.table(subset(df3, age_group_id == 12)),
            geog_id="location_id",
            variable="log_rate",
