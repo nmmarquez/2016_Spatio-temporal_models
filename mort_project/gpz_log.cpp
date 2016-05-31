@@ -13,6 +13,7 @@ SparseMatrix<Type> car_Q(SparseMatrix<Type> graph, Type rho, Type sigma){
     for (int i = 0; i < Q.rows(); i++){
        Q.insert(i,i) = graph.col(i).sum() / sigma;
     }
+    return Q;
 }
 
 template<class Type>

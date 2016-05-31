@@ -22,13 +22,13 @@ df <- subset(df, sex_id == 1 & age_mean<=100 & year_id>=1990)
 df$age_group <- df$age_group_id - min(df$age_group_id)
 df$time_group <- df$year_id - min(df$year_id)
 df$loc_group <- as.numeric(as.factor(df$location_id)) - 1
-option <- 0
-print <- TRUE
+option <- 1
+print <- FALSE
 model_name <- model
 time_plot(df, 1)
 
 # run model
-run_model <- function(df, option=1, model_name=model, print=F){
+run_model <- function(df, option=1, model_name=model, print=F, Q=F){
     N_ <- nrow(df)
     T_ <- length(unique(df$time_group))
     A_ <- length(unique(df$age_group))
@@ -76,10 +76,13 @@ run_model <- function(df, option=1, model_name=model, print=F){
     Opt <- nlminb(start=Obj$par, objective=Obj$fn, gradient=Obj$gr,)
                   #control=list(iter.max=1000, eval.max=500))
     Report <- Obj$report()
-    dyn.unload(dynlib(model_name))
     if(Opt$convergence != 0){
         print("Model had partial or non_convergence!")
     }
+    if(Q){
+        Report$Q <- sdreport(Obj, getJointPrecision=TRUE)$jointPrecision
+    }
+    dyn.unload(dynlib(model_name))
     Report
 }
 
@@ -100,13 +103,8 @@ add_df$population <- NA
 df2 <- rbind(df, add_df)
 df2$time_group <- df2$year_id - min(df2$year_id)
 
-silder3 <- run_model(df2, option=1, print=T)
+silder3 <- run_model(df2, option=1, print=T, Q=T)
 df2$log_rate_hat <- silder3$log_rate_mort_hat
 time_plot(subset(df2, loc_group==8), 1, preds=T)
 age_plot(subset(df2, loc_group==8), 1, preds=T)
-silder$Q_loc
-silder3$rho_age
-silder3$rho_time
-silder3$sigma_time
-silder3$sigma_age
-silder3$secular
+vcov_ <- solve(silder3$Q)
