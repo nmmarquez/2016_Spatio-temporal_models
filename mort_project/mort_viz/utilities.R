@@ -4,6 +4,7 @@ library(dplyr)
 library(grid)
 library(RMySQL)
 library(data.table)
+library(surveillance)
 
 
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
@@ -54,15 +55,19 @@ age_df_download <- function(){
     query_cod_db(call)
 }
 
-admin_queens <- function(rho=.7){
+admin_queens <- function(rho=.7, sigma=1, prec=TRUE){
     load("./gbd_shapefile/gbd15.rdata")
     usa <- gbd15[gbd15$parent_id == 102 & 
                      !(gbd15$loc_name %in% c("Alaska", "Hawaii")),]
     mat <- poly2adjmat(usa)
+    if (!prec){
+        return(as(mat, "dgTMatrix"))
+    }
     diag(mat) <- 0
     n_delta_i <- rowSums(mat)
+    mat <- mat * rho
     mat <- -1 * mat
-    diag(mat) <- n_delta_i
+    diag(mat) <- n_delta_i / sigma
     mat
 }
 

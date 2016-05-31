@@ -62,7 +62,8 @@ run_model <- function(df, option=1, model_name=model, print=F){
                    logit_rho_age=0, logit_rho_age2=0, logit_rho_time2=0,
                    epsilon_age_time=matrix(0, nrow=A_, T_))
     Data <- list(log_rate_mort=df$log_rate, age=df$age_mean, option=option,
-                 age_group=df$age_group, time_group=df$time_group)
+                 age_group=df$age_group, time_group=df$time_group,
+                 graph=admin_queens(prec=F))
     Obj <- MakeADFun(data=Data, parameters=Params, DLL=model_name,
                      silent=!print, map=Map, random = Random)
     Obj$env$tracemgc <- print
