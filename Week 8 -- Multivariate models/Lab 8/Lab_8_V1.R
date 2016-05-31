@@ -15,12 +15,12 @@ library(TMBdebug) # Only necessary when debugging
 source( "Sim_Fn.R")
 
 # Simulation settings
-n_factors_true = 3
+n_factors_true = 6
 n_species = 10
 n_stations = 100
 
 # Estimation settings
-n_factors_estimation = 3
+n_factors_estimation = 2
 
 # Simulate data
 Data_List = Sim_Fn( n_p=n_species, n_s=n_stations, n_f=n_factors_true )
@@ -56,9 +56,16 @@ Opt = nlminb(start=Obj$par, objective=Obj$fn, gradient=Obj$gr, control=list(eval
 SD = sdreport(Obj)
 Report = Obj$report()
 
+# Hessian
+Hess = optimHess( par=Opt$par, fn=Obj$fn, gr=Obj$gr )
+
 # Compare with simulated values
 # Psi (loadings matrix)
-Report$Loadings_pf; Data_List$Loadings_pf
+Report$Loadings_pf
+Data_List$Loadings_pf
+
+# Compare covariances
+plot( x=Report$Loadings_pf%*%t(Report$Loadings_pf), y=Data_List$Loadings_pf%*%t(Data_List$Loadings_pf))
 
 # Omega (prediction for each species)
 par( mfrow=c(1,min(n_factors_true,n_factors_estimation)) )
