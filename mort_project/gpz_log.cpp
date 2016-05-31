@@ -11,7 +11,7 @@ template<class Type>
 SparseMatrix<Type> car_Q(SparseMatrix<Type> graph, Type rho, Type sigma){
     SparseMatrix<Type> Q = rho * graph * Type(-1.);
     for (int i = 0; i < Q.rows(); i++){
-       Q.coeffRef(i,i) = graph.col(i).sum() / sigma;
+       Q.insert(i,i) = graph.col(i).sum() / sigma;
     }
 }
 
@@ -88,17 +88,23 @@ Type objective_function<Type>::operator() ()
         Q_loc2.insert(n,n) = 1.;
     }
     
+    
     // Probability of random effects
     //SparseMatrix<Type> Q_loc = car_Q(graph, rho_loc, sigma_loc);
     SparseMatrix<Type> Q_age = ar_Q(A, rho_age, sigma_age);
     SparseMatrix<Type> Q_time = ar_Q(T, rho_time, sigma_time);
     
-    if(option >= 1){
+    SparseMatrix<Type> Q_loc = rho_loc * graph * Type(-1.);
+    for (int i = 0; i < Q_loc.rows(); i++){
+        Q_loc.insert(i,i) = graph.col(i).sum() / sigma_loc;
+    }
+    
+    if(option == 1){
         nll += SEPARABLE(GMRF(Q_time), SEPARABLE(GMRF(Q_age), GMRF(Q_loc2)))(phi);
     }
-    //if(option >= 2){
-    //    nll += GMRF(Q_loc)(epsilon);
-    //}
+    if(option == 2){
+        nll += GMRF(Q_loc)(epsilon);
+    }
 
     printf("%s\n", "make_predictions");
     Type N0 = exp(gpz[0]);
@@ -117,14 +123,16 @@ Type objective_function<Type>::operator() ()
         sw_term = logit_scaled(age[n], rho, Type(3.));
         inf_term = (N0 * exp(lambda * age[n]) + c);
         sns_term = (m * age[n] + b);
-        re_term = phi(loc_group[n], age_group[n], time_group[n]); //+ epsilon(loc_group[n]);
+        re_term = phi(loc_group[n], age_group[n], time_group[n]) + epsilon(loc_group[n]);
         log_rate_mort_hat[n] = inf_term * (1 - sw_term) + sw_term * sns_term + 
             secular * time_group[n] + re_term; 
     }
 
     printf("%s\n", "evaluate data likelihood");
     for(int n=0; n<N; n++){
-        nll -= dnorm(log_rate_mort[n], log_rate_mort_hat[n], sigma_obs, true);
+        if(!CppAD::isnan(log_rate_mort[n])){
+            nll -= dnorm(log_rate_mort[n], log_rate_mort_hat[n], sigma_obs, true);
+        }
     }
 
     printf("%s\n", "Report values");
@@ -137,13 +145,16 @@ Type objective_function<Type>::operator() ()
     REPORT(b);
     REPORT(sigma_obs);
     REPORT(sigma_age);
+    REPORT(sigma_time);
     REPORT(nll);
     REPORT(age_group);
     REPORT(log_rate_mort_hat);
-    //REPORT(Q_loc);
+    REPORT(Q_loc);
     REPORT(Q_age);
     REPORT(Q_time);
     REPORT(phi);
     REPORT(rho_age);
+    REPORT(rho_time);
+    REPORT(rho_loc);
     return nll;
 }
