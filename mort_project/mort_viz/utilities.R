@@ -189,14 +189,15 @@ gpz_log <- function(x, N0, lambda, a, k, h, m, b){
 }
 
 
-age_plot <- function(df, sex_id, preds=FALSE, draws=FALSE){
+age_plot <- function(df, sex_id, preds=FALSE, draws=FALSE, title_=''){
     sub_df <- df[df$sex_id == sex_id,]
     sub_df <- sub_df[order(sub_df$age_mean, sub_df$year_id),]
     plot.age <- ggplot(sub_df, aes(x=year_id, y=log_rate, 
                                    color=age_mean, group=age_mean,
                                    ymin=lwr_bound, ymax=upr_bound)) + 
         geom_line()  + scale_x_continuous("Time") + 
-        scale_y_continuous("Log Rate(per 100,000) Mortality")
+        scale_y_continuous("Log Rate(per 100,000) Mortality") + 
+        labs(title=title_)
     if(preds){
         plot.age <- plot.age + geom_path(data=sub_df, 
                                          aes(x=year_id, y=log_rate_hat, 
