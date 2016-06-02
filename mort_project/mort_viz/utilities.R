@@ -212,13 +212,14 @@ age_plot <- function(df, sex_id, preds=FALSE, draws=FALSE){
     plot.age
 }
 
-time_plot <- function(df, sex_id, preds=FALSE){
+time_plot <- function(df, sex_id, preds=FALSE, title_=''){
     sub_df <- df[df$sex_id == sex_id,]
     sub_df <- sub_df[order(sub_df$age_mean, sub_df$year_id),]
     plot.time <- ggplot(sub_df, aes(x=age_mean, y=log_rate, color=year_id, 
                                     group=year_id)) +
         geom_line() + scale_x_continuous("Age") +
-        scale_y_continuous("Log Rate(per 100,000) Mortality")
+        scale_y_continuous("Log Rate(per 100,000) Mortality") + 
+        labs(title=title_)
     plot.time <- plot.time + scale_color_gradientn("Time", colours=rainbow(7)) + 
         theme(legend.justification=c(0,1), legend.position=c(0.05,1),
               legend.direction="horizontal", legend.text=element_text(angle=45),
