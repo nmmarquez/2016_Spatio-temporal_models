@@ -113,8 +113,17 @@ inf_term <- function(x, N0=1, lambda=-1, c=0){
     N0 * exp(lambda * x) + c
 }
 
+inf_term_vec <- function(ages, N0, lambda, c){
+    sweep(sweep(exp(sweep(ages,MARGIN=2,lambda,`*`)), MARGIN=2, N0,`*`), 
+          MARGIN=2, c, `+`)
+}
+
 logit_scaled <- function(x, eta, scale){
     1 / (1 + exp(scale * (eta - x)))
+}
+
+logit_scaled_vec <- function(ages, eta){
+    1 / (1 + exp(3 * (sweep(ages, MARGIN=2, eta,`-`))))
 }
 
 ya_term <- function(x, eta=mean(x), scale=1, ceiling=1){
@@ -122,7 +131,55 @@ ya_term <- function(x, eta=mean(x), scale=1, ceiling=1){
 }
 
 sns_term <- function(x, rho, m, b){
-    (m * x + b) * logit_scaled(x, eta=rho, scale=3)
+    m * x + b
+}
+
+sns_term_vec <- function(ages, m, b){
+    sweep(sweep(ages, MARGIN=2, m,`*`), MARGIN=2, b, `+`)
+}
+
+create_draws <- function(model, draws){
+    mat <- t(rmvn.sparse(draws, c(model$Q$par.fixed, model$Q$par.random), 
+                         Cholesky(model$Q$jointPrecision), prec=T))
+    row.names(mat) <- c(names(model$Q$par.fixed), names(model$Q$par.random))
+    row.names(mat)[1:6] <- c("log_N0", "neglog_lambda", "c", "m", "b", "log_rho")
+    for (i in 1:nrow(mat)){
+        if(grepl("neglog_", row.names(mat)[i])){
+            mat[i,] <- -1 * exp(mat[i,]) 
+        }
+        else if(grepl("log_", row.names(mat)[i])){
+            mat[i,] <- exp(mat[i,]) 
+        }
+        else if(grepl("logit_", row.names(mat)[i])){
+            mat[i,] <- expit(mat[i,]) 
+        }
+    }
+    mat
+}
+
+realizations <- function(df, model, draw_num){
+    param_draws <- create_draws(model, draw_num)
+    draws <- ncol(param_draws)
+    rep_zero <- rep(0, draw_num)
+    N <- nrow(df)
+    N0 <- param_draws[1,]
+    lambda <- param_draws[2,]
+    c <- param_draws[3,]
+    m <- param_draws[4,]
+    b <- param_draws[5,]
+    rho <- param_draws[6,]
+    secular <- param_draws["secular",]
+    ages <- matrix(data=df$age_mean, nrow=N, ncol=draw_num)
+    year_dat <- (df$time_group - mean(df$time_group)) / sd(df$time_group)
+    years <- matrix(data=year_dat, nrow=N, ncol=draw_num)
+    inf <- inf_term_vec(ages=ages, N0=N0, lambda = lambda, c=c)
+    sns <- sns_term_vec(ages=ages, m=m, b=b)
+    pr <- logit_scaled_vec(ages=ages, eta=rho)
+    sec <- sns_term_vec(ages=years, m=secular, b=rep_zero)
+    re <- param_draws[row.names(param_draws) == "phi",]
+    results <- sns * (1 - pr) + inf * pr + sec + re
+    row.names(results) <- NULL
+    results
 }
 
 gpz_log <- function(x, N0, lambda, a, k, h, m, b){
@@ -132,22 +189,26 @@ gpz_log <- function(x, N0, lambda, a, k, h, m, b){
 }
 
 
-age_plot <- function(df, sex_id, preds=FALSE){
+age_plot <- function(df, sex_id, preds=FALSE, draws=FALSE){
     sub_df <- df[df$sex_id == sex_id,]
     sub_df <- sub_df[order(sub_df$age_mean, sub_df$year_id),]
     plot.age <- ggplot(sub_df, aes(x=year_id, y=log_rate, 
-                                   color=age_mean, group=age_mean)) + 
+                                   color=age_mean, group=age_mean,
+                                   ymin=lwr_bound, ymax=upr_bound)) + 
         geom_line()  + scale_x_continuous("Time") + 
         scale_y_continuous("Log Rate(per 100,000) Mortality")
-    plot.age <- plot.age + scale_color_gradientn("Age",colours=rainbow(7)) + 
-        theme(legend.margin=unit(-0.02,"npc"), legend.text=element_text(size=8),
-              text = element_text(size=20))
     if(preds){
         plot.age <- plot.age + geom_path(data=sub_df, 
                                          aes(x=year_id, y=log_rate_hat, 
                                              colour=age_mean, group=age_mean),
                                          linetype="dashed")
     }
+    if(draws){
+        plot.age <- plot.age + geom_ribbon(alpha=0.2)
+    }
+    plot.age <- plot.age + scale_color_gradientn("Age",colours=rainbow(7)) + 
+        theme(legend.margin=unit(-0.02,"npc"), legend.text=element_text(size=8),
+              text = element_text(size=20))
     plot.age
 }
 
@@ -178,4 +239,12 @@ reload_model <- function(model){
     if (file.exists(paste0(model, ".o"))) file.remove(paste0(model, ".o"))
     if (file.exists(paste0(model, ".dll"))) file.remove(paste0(model, ".dll"))
     compile(paste0(model, ".cpp"))
+}
+
+var_AR1 <- function(n, rho, sigma){
+    var_ <- rep(sigma**2, n)
+    for (i in 2:n){
+        var_[i:n] <- var_[i:n] + (rho**(i-1) * sigma)**2
+    }
+    var_
 }

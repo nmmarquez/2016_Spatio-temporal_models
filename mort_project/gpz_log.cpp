@@ -9,9 +9,9 @@ Type logit_scaled(Type x, Type switch_point, Type scale){
 
 template<class Type>
 SparseMatrix<Type> car_Q(SparseMatrix<Type> graph, Type rho, Type sigma){
-    SparseMatrix<Type> Q = rho * graph * Type(-1.);
+    SparseMatrix<Type> Q = rho * graph * Type(-1.) * (1./sigma);
     for (int i = 0; i < Q.rows(); i++){
-       Q.insert(i,i) = graph.col(i).sum() / sigma;
+       Q.insert(i,i) = 1. / sigma;
     }
     return Q;
 }
@@ -45,6 +45,7 @@ Type objective_function<Type>::operator() ()
     // Data
     DATA_VECTOR(log_rate_mort);
     DATA_VECTOR(age);
+    DATA_VECTOR(year_dat);
     DATA_IVECTOR(age_group);
     DATA_IVECTOR(time_group);
     DATA_IVECTOR(loc_group);
@@ -91,20 +92,12 @@ Type objective_function<Type>::operator() ()
     
     
     // Probability of random effects
-    //SparseMatrix<Type> Q_loc = car_Q(graph, rho_loc, sigma_loc);
+    SparseMatrix<Type> Q_loc = car_Q(graph, rho_loc, sigma_loc);
     SparseMatrix<Type> Q_age = ar_Q(A, rho_age, sigma_age);
     SparseMatrix<Type> Q_time = ar_Q(T, rho_time, sigma_time);
     
-    SparseMatrix<Type> Q_loc = rho_loc * graph * Type(-1.);
-    for (int i = 0; i < Q_loc.rows(); i++){
-        Q_loc.insert(i,i) = graph.col(i).sum() / sigma_loc;
-    }
-    
     if(option == 1){
         nll += SEPARABLE(GMRF(Q_time), SEPARABLE(GMRF(Q_age), GMRF(Q_loc2)))(phi);
-    }
-    if(option == 2){
-        nll += GMRF(Q_loc)(epsilon);
     }
 
     printf("%s\n", "make_predictions");
@@ -126,7 +119,7 @@ Type objective_function<Type>::operator() ()
         sns_term = (m * age[n] + b);
         re_term = phi(loc_group[n], age_group[n], time_group[n]) + epsilon(loc_group[n]);
         log_rate_mort_hat[n] = inf_term * (1 - sw_term) + sw_term * sns_term + 
-            secular * time_group[n] + re_term; 
+            secular * year_dat[n] + re_term; 
     }
 
     printf("%s\n", "evaluate data likelihood");
@@ -147,6 +140,7 @@ Type objective_function<Type>::operator() ()
     REPORT(sigma_obs);
     REPORT(sigma_age);
     REPORT(sigma_time);
+    REPORT(sigma_loc);
     REPORT(nll);
     REPORT(age_group);
     REPORT(log_rate_mort_hat);
