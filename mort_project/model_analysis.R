@@ -126,7 +126,7 @@ run_full <- function(df, sex, holdout=2006){
 all_df <- list(male=0, female=0)
 
 all_df$female <- run_full(df, 2, 2006)
-names(all_df$female) <- c()
+#names(all_df$female) <- c()
 all_df$male <- run_full(df, 1, 2006)
 
-save(all_df, file="~/Documents/fish_proj/all_data.rda")
+save(all_df, file="~/Documents/Classes/2016_Spatio-temporal_models/mort_project/all_data.rda")
