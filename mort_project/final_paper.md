@@ -109,9 +109,33 @@ they do not offer a good solution for mortality over time or across regions. In
 forecasting mortality at the all cause and cause specific level. Abandoning the
 traditional framework of looking at age patterns the model argues that better
 forecasts can be made by assuming that ages are largely independent in their
-level and only similar in their rate of change. In doing so the correlation between ages is lost and as the
-forecasted model continues outward it will propagate differences between age groups.
-The model is as follows
+level and only similar in their rate of change. In this model we estimate
+$m_{x,t}$ which is the rate of mortality for age $x$ at time $t$. $m_{x,t}$ is
+estimated using the following equation
+
+$$
+log(m_{x,t}) = a_x + b_x k_t + e_{x,t}
+$$
+
+The model has terms that are both age group specific ($a_x$ and $b_x$), a set of
+terms that are specific to time ($k_t$) and an error term that follows a normal
+iid distribution
+
+$$
+e_{x,t} \sim \mathcal{N}(0, \sigma_{e}^{2})
+$$
+
+Lee and Carter outline a least squares estimate to these specifications in their
+original paper. $a_x$ is calculated as the mean of age specific log mortality
+rates over time or
+
+$$
+a_x = \sum_{t=1}^{T} log(m_{x,t}) / T
+$$
+
+where $T$ is the ordinal time points in the analysis indexed from 1, such as
+years. $b_x$ and $k_t$ are calculated simultaneously by taking the singular
+value decomposition of the matrix $log(m_{x,t} - a_x)$
 
 $$
 m_{at} \sim \mathcal{N}(\mu_{at}, \sigma^{2})
