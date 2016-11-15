@@ -2,6 +2,7 @@ rm(list=ls())
 library(dplyr)
 
 setwd("~/Documents/Classes/2016_Spatio-temporal_models/mort_project/")
+source("./mort_viz/utilities.R")
 
 if (!("data.rda" %in% list.files())){
     df <- download_mort_data()
@@ -63,4 +64,16 @@ lee_carter_model <- function(sex, year_id){
     df2
 }
 
-test <- lee_carter_model(1, 2006)
+run_full <- function(sex, holdout){
+    loc_df <- get_locations()
+    df1 <- left_join(lee_carter_model(sex, holdout), loc_df)
+    df2 <- left_join(lee_carter_model(sex, 2015), loc_df)
+    list(df_edit=df1, df2=df2)
+}
+
+all_df <- list(male=0, female=0)
+
+all_df$female <- run_full(2, 2006)
+all_df$male <- run_full(1, 2006)
+
+save(all_df, file="./lee_carter_all_data.rda")

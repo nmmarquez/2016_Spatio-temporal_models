@@ -5,6 +5,7 @@ library(grid)
 library(RMySQL)
 library(data.table)
 library(surveillance)
+source('./db_access.R')
 
 
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
