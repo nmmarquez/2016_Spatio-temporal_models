@@ -296,6 +296,8 @@ $$
 log(m_{lat}) \sim \mathcal{N}(\mu_{lat}, \sigma_{obs})
 $$
 
+where $m_{lat}$ is the observed data and $\mu_{lat}$ is the predicted.
+
 In structuring the model in this way the deterministic skeleton insures that
 estimates will follow a coherent age structure that fits with our past
 observations on how mortality operates.
@@ -312,7 +314,15 @@ benefit of being tested on many times such that comprehensive
 benchmarks exist for forecasting. Data was collected from the Institute of
 Health Metrics and Evaluations reporting values for the states within the United
 States for every year between 1990-2015 and for the age groups reported in the
-Global Burden of Disease project.
+Global Burden of Disease(GBD) project. Data on the number of deaths that occur
+in a state along with the population for each year and age group were obtained
+so that a rate of death could be obtained for each.
+
+The model uses discrete age groups in line
+with what the GBD has produced for their studies and attempts to model mortality
+for ages between 0 and 80 in 5 year age groups save for younger ages which use
+age groups 0-7 days, 8-28 days, 28-365 days, and 1 year to 5 years as the first
+age groups.
 
 ### Evaluation
 To evaluate the model performance the model will be fit on the years
@@ -327,6 +337,19 @@ points were chosen to test how changes deeper in forecasting periods can reflect
 differences in model preference. Results will be reported separately for males
 and females.
 
+### Statistical Approach
+Both models were fit using R version 3.3.2 on a unix operating system. The
+modified Siler model used the package Template Model Builder (TMB) which uses a
+C++ template file to construct a model specified by the user. TMB allows users
+to specify which parameters to be considered as fixed effects vs random effects
+which dictate which part of the optimization process, either inner or outer,
+the parameter is a part of. All parameters in the deterministic skeleton were
+considered fixed effects for this analysis while all the others were considered
+random effects. The likelihood of the model is determined by the probability
+distribution specified above. The model is fit using a maximum likelihood
+estimate to minimize the negative log likelihood of the data given the random
+effects structure of our $\phi$ parameter.
+
 ## Results
 
 Below is the fit of data between the years 1990 and 2005
@@ -340,14 +363,32 @@ forecasted out to 2030.
 
 ![0](/home/nmarquez/Documents/Classes/2016_Spatio-temporal_models/mort_project/ca_forecast_time.png ""){#id .class width=400 height=220px}\
 
+An important take away from these results is the difference in the rate of
+declining mortality for all age groups. Because the temporal component of the
+model varies by age group much of the explanation of temporal change is
+attributed to the correlation in the error with only a minimal portion attributed
+to the temporal component of the model. Because of this we see big drops in
+mortality in the future at the age groups around 20 year olds and smaller drops
+in mortality in other age groups.
+
 Below is the error map shown with model for out of sample results
-between 2013 and 2015.
+between 2013 and 2015,
 
 ![0](/home/nmarquez/Documents/Classes/2016_Spatio-temporal_models/mort_project/log_rate_error_map.png ""){#id .class width=400 height=220px}\
 
-And below is the difference in out of sample error within age groups.
+as well as a diagnostic plot for error by age for out of sample estimates.
 
 ![0](/home/nmarquez/Documents/Classes/2016_Spatio-temporal_models/mort_project/forecasted_error_by_age.png ""){#id .class width=400 height=220px}\
+
+While the model is zero centered in its estimates for ages and locations their
+is a large amount of variation in young age groups and indicates that changes to
+the functional form and how it relates to young age groups may need to change.
+The geographic error plot also shows that their is still some systematic bias to
+overestimate mortality in the Midwest states compared to states on the west
+coast.
+
+### Comparison to Lee Carter Model
+
 
 
 ## Discussion
