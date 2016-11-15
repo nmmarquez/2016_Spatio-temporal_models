@@ -122,7 +122,7 @@ terms that are specific to time ($k_t$) and an error term that follows a normal
 iid distribution
 
 $$
-e_{x,t} \sim \mathcal{N}(0, \sigma_{e}^{2})
+e_{x,t} \sim \mathcal{N}(0, \sigma_{e})
 $$
 
 Lee and Carter outline a least squares estimate to these specifications in their
@@ -135,28 +135,36 @@ $$
 
 where $T$ is the ordinal time points in the analysis indexed from 1, such as
 years. $b_x$ and $k_t$ are calculated simultaneously by taking the singular
-value decomposition of the matrix $log(m_{x,t} - a_x)$
+value decomposition of the matrix $log(m_{x,t} - a_x)$ such that the equation
+follows $log(m_{x,t} - a_x)=USV^{\intercal}$ from which $b_x$ and $k_t$ can be
+obtained from $U[,1]$ and $V[,1]$ respectively. These values then can generate
+estimates for any in sample time point. In order to forecast Lee Carter states
+that the $k_t$ parameters can be forecasted forward using a forecasting method
+from the ARIMA family. In the paper they use a Random walk model that follows
+the specification
 
 $$
-m_{at} \sim \mathcal{N}(\mu_{at}, \sigma^{2})
+k_t = k_{t-1} + d + \epsilon_t
 $$
 $$
-\mu_{at} = \beta{a}\gamma{t}
-$$
-$$
-\gamma_{t} = \gamma_{t-1} + \theta + \epsilon_{t}
-$$
-$$
-\epsilon_{t} \sim \mathcal{N}(0, \sigma^{2}_{rw})
+\epsilon_{t} \sim \mathcal{N}(0, \sigma_{\epsilon})
 $$
 
-While this model has preformed well when tested on US mortality data from 1970
-to 2005 within the US it has performed lackluster in other environments.
-Because of the lack of age structure th model produces nonsensical results
+This model produces sensible results in terms of short term forecasts and has
+performed well in datasets in the US from 1970 to 2005. Additionally, the Social
+Security Administration and the US Census Bureau have reported using variants of
+the Lee Carter model for their projections and social security planning.
+
+While this model has preformed well when tested on US mortality data it
+has performed lackluster in other environments.
+Because of the lack of age structure, the model produces nonsensical results
 where adjacent age groups have differing and sometimes opposite rates of
-change log rate mortality. In 2006 Girosi and King wrote a response to the model
-showing where the model works well and the many times that it doesnt and
-criticizing the approach for not pooling information across age and
+change log rate mortality. This is seldom a problem for sort term forecasting,
+such as 5 years, but with more long term forecasting creates patterns of
+mortality that does not resemble the standard age curve that Siler captured in
+his descriptive model. In 2006 Girosi and King wrote a response to the Lee-
+Carter model showing where the model works well and the many times that it does
+not and criticizing the approach for not pooling information across age and
 geography.
 
 ## Modified GeoTemporal Siler
@@ -169,17 +177,24 @@ be broken down into three familiar components. The first component is a
 modification of the Siler model specified above and follows the form
 
 $$
-S_x = (N0exp(\lambda x) + c) \times (1 - pr_x) + pr_x \times (mx + b)
+S_a = (N0exp(\lambda a) + c) \times (1 - pr_a) + pr_a \times (ma + b)
 $$
 where
 $$
-pr_x = 1 / (1 + exp(3 * (\kappa-x)))
+pr_a = 1 / (1 + exp((\kappa-a)))
 $$
 
 The first term in the first equation corresponds to infant mortality term in
-the Siler model and the second term is the senescence component. The model also
-has a temporal trend added to it which accounts for some technological
-innovation over time.
+the Siler model and the second term is the senescence component. The term $N0$
+and $c$ dictate the drop in infant mortality from birth as the constant and
+intercept in log space. The terms $m$ and $b$ account for the linear growth in
+log space of mortality in older ages. The $pr_a$ term accounts for the transition
+from experiencing mortality at child levels to adult levels as the proportion of
+mortality threats that you experience. This component uses a logit transfer to
+model the parameters such that they scale from 0 to 1 as age increases such that
+as you get older you experience less and less of the infant mortality effects.
+The model also has a temporal trend added to it which accounts for some
+technological innovation over time.
 
 $$
 temporal = \beta \times time
@@ -189,18 +204,34 @@ This component has the ability incorporate within it the effects of covariates
 the mark medical and technological innovations that effect mortality however
 we will simply use time in this exercise as a proxy for their effect on mortality.
 That is to say that we expect that as time passes mortality will decrease as
-innovations happen.
+innovations happen. The first two components will constitute what we will
+consider the deterministic skeleton. This is how we perceive that mortality
+is structured and how we believe it progresses over time independent of any
+observations. Observations that we do see will be centered off of this
+deterministic skeleton with some error.
 
 The last component is the structured random error component which captures
-relatedness across three dimensions of error, age, space and time. The
-structure is as follows.
+relatedness across three dimensions of error, age, space and time. In this way
+we acknowledge that the deterministic skeleton captures the baseline estimate
+and that our errors are not independent but rather are correlated across the
+dimensions that we have stated above. In order to capture the relatedness of
+these errors we use the following specification
 
 $$
-\phi \sim \mathcal{N}(0, Q^{-1})
+\phi_{l,a,t} \sim \mathcal{N}(0, Q^{-1})
 $$
 
-$Q$ acts as the precision matrix for this model which is composed of three
-independent portions.
+$phi$ can either be thought of as a vector of random variables which follow the
+distribution as shown above or a 3-dimensional array for the dimensions
+location, age, and time which we show above for convenience of notation.
+
+$Q$ acts as the precision matrix, which is the inverse of the variance-
+covariance matrix. This matrix
+is a square matrix of length equal to the product of the numbers of locations,
+ages, and times and is composed of three structured
+precision matrices for the dimensions of location, age, and time.
+These precision matrices can be combined for joint precision by using the Kronecker
+product as shown below.
 
 $$
 Q = Q_{loc} \otimes Q_{age} \otimes Q_{time}
@@ -221,14 +252,15 @@ Q^{AR}_{i,j} =
  \end{aligned}
 $$
 
-For modeling purposes we will be using discrete units for bot age and time
+For modeling purposes we will be using discrete units for both age and time
 where the ages reflect Global Burden of Disease age Groups and years are
 single year groups. This allows for a trivial application for the AR1 precision
 matrix to be applied to each dimension.
 
 The precision matrix for a the geospatial portion follows a conditional
 auto-regressive form where elements are autoregressive if they are
-considered neighbors. Because we are using an areal approach we determine
+considered neighbors. Because we are using an areal approach,using two
+dimensional units in space rather than a single point in space, we determine
 neighbors as those geographical units that share a border with one another.
 The matrix is defined as follows
 
@@ -255,7 +287,7 @@ scale.
 The full model is then seen as
 
 $$
-log(\mu_{lat}) = S_x + temporal_t + \phi_{lat}
+log(\mu_{lat}) = S_a + temporal_t + \phi_{lat}
 $$
 
 with a probability distribution
@@ -264,7 +296,12 @@ $$
 log(m_{lat}) \sim \mathcal{N}(\mu_{lat}, \sigma_{obs})
 $$
 
+In structuring the model in this way the deterministic skeleton insures that
+estimates will follow a coherent age structure that fits with our past
+observations on how mortality operates.
+
 ## Fitting the model
+### Data
 
 In order to test the model we will evaluate the model as fitted on
 US state mortality data between the years of 1990 to 2015. US data
@@ -272,13 +309,23 @@ has the luxury of being from a near complete and comprehensive
 vital registration system that tracks most deaths at the state level
 for any given year well while documenting age. This data also has the
 benefit of being tested on many times such that comprehensive
-benchmarks exist for forecasting.
+benchmarks exist for forecasting. Data was collected from the Institute of
+Health Metrics and Evaluations reporting values for the states within the United
+States for every year between 1990-2015 and for the age groups reported in the
+Global Burden of Disease project.
 
+### Evaluation
 To evaluate the model performance the model will be fit on the years
-spanning between 1990 and 2005 and then error metrics will be
-calculated using holdout data from 2012 to 2015. After this full
-forecasts will be made out to 2030 using the entire data set.
-Separate models will be run for males and females.
+spanning between 1990 and 2005 and then error metrics, RMSE for varying time
+points, will be calculated using holdout data from 2012 to 2015. After this full
+forecasts will be made out to 2030 using the entire data set. Separate models
+will be run for males and females. In order to compare the model to a benchmark
+we will compare our results against the Lee-Carter model described above.
+Comparisons will be made by taking the out of sample root mean squared error for
+the holdout model in two time points, 2009 to 2011, and 2013 to 2015. These time
+points were chosen to test how changes deeper in forecasting periods can reflect
+differences in model preference. Results will be reported separately for males
+and females.
 
 ## Results
 
