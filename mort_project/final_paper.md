@@ -327,7 +327,7 @@ age groups.
 ### Evaluation
 To evaluate the model performance the model will be fit on the years
 spanning between 1990 and 2005 and then error metrics, RMSE for varying time
-points, will be calculated using holdout data from 2012 to 2015. After this full
+points, will be calculated using holdout data from 2006 to 2015. After this full
 forecasts will be made out to 2030 using the entire data set. Separate models
 will be run for males and females. In order to compare the model to a benchmark
 we will compare our results against the Lee-Carter model described above.
@@ -349,6 +349,9 @@ random effects. The likelihood of the model is determined by the probability
 distribution specified above. The model is fit using a maximum likelihood
 estimate to minimize the negative log likelihood of the data given the random
 effects structure of our $\phi$ parameter.
+
+ The full set of code used to run the analysis can be found here  
+ **https://github.com/nmmarquez/2016_Spatio-temporal_models/tree/master/mort_project**
 
 ## Results
 
@@ -380,16 +383,35 @@ as well as a diagnostic plot for error by age for out of sample estimates.
 
 ![0](/home/nmarquez/Documents/Classes/2016_Spatio-temporal_models/mort_project/forecasted_error_by_age.png ""){#id .class width=400 height=220px}\
 
-While the model is zero centered in its estimates for ages and locations their
-is a large amount of variation in young age groups and indicates that changes to
-the functional form and how it relates to young age groups may need to change.
+The age distribution of the plot shows that their is systematic bias in the age
+groups in terms of the directionality and the variation of the error of the
+residuals. Younger age groups tend to have an underestimated prediction shown
+by the negative error in the age plot while the age groups in the middle ages
+tend to have a systematic over estimation in the mortality rate. In addition,
+looking at age group 4, which is the age group of individuals from 5 years to
+10 years old, there is a large amount of variation in the residuals when
+compared to the adjacent age groups suggesting that our model may not be well
+capturing the transition from declining mortality rates at young ages to
+increasing rates at older ages.  
+
 The geographic error plot also shows that their is still some systematic bias to
 overestimate mortality in the Midwest states compared to states on the west
 coast.
 
 ### Comparison to Lee Carter Model
 
+#### Model RMSE Results for Males
+| YEARS EVALUATED | SILER | LEE CARTER |
+|-----------------|-------|------------|
+| 2009-2011       | .1329 | .1470      |
+| 2013-2015       | .1822 | .1844      |
 
+
+#### Model RMSE Results for Females
+| YEARS EVALUATED | SILER | LEE CARTER |
+|-----------------|-------|------------|
+| 2009-2011       | .1629 | .1627      |
+| 2013-2015       | .1910 | .1875      |
 
 ## Discussion
 
