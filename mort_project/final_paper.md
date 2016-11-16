@@ -413,25 +413,38 @@ coast.
 | 2009-2011       | .1629 | .1627      |
 | 2013-2015       | .1910 | .1875      |
 
+Despite the faults of the model stated above, when compared to the Lee-Carter
+model there is an even split on how well the model performs on tests of out of
+sample predictive validity. The modified Siler model performs better in measures
+of RMSE for both sets of years evaluated for males while the reverse is true for
+females. This result indicates that the Siler model is more robust to the shifts
+in mortality for males than for females. Both models performed worse for females
+than males indicating that there is more variation in females that is harder to
+capture with either model. (cite study here) has indicated that within the United
+States there has been a slow down in the decrease of mortality over time for
+middle age females in recent years that both models have struggled to capture
+however this has not been tested in this analysis.
+
 ## Discussion
 
-While the model fits the data relatively well future changes to the exact parameterizations
-of the model will need to be done to account for the current biases in the model.
-Currently the model systematically is biased upwards for young age groups relative
-to old age groups. This can be seen in the error by age group graph above for out
-of sample data. This could mean that changes to log rate mortality are changing more
-rapidly for young ages compared to older ages.
+In this analysis we presented an alternative model for forecasting mortality
+which uses a structured age format in is deterministic skeleton based of of the
+Sile model of mortality along with a temporal for development and structured
+random effects to be able to pool data across regions and forecast mortality
+results for separate locations and ages. This model differed from other models
+in that it incorporates the age structure that is inherent in descriptive
+models of mortality and leverages relationships in other dimensions of
+concern, namely time and space, in order to make forecasts. In doing so the
+model is able to take into account rates of changes observed in the past for a
+particular age group, such as in the Lee-Carter model, while simultaneously
+keeping a coherent age structure, a criticism that was posited by Girosi-King in
+their critique of the model.
 
-In addition the map above shows that there may be some regional effects that are not
-captured well in this model. In order to alleviate this a random effect that just
-captures geography effect could be added.
+In addition to addressing the theoretical concerns that are often addressed when
+modeling mortality this model was shown to produce comparable results in terms
+of RMSE when compared to the Lee-Carter model, a model that is used heavily in
+demographic forecasting for mortality.
 
-While this model was unable to come to the level of predictive validity of either the
-Girosi-King model or the Lee-Carter model, it retention of age pattern offers hope that
-it can be used in the future. In these runs of US data the temporal trend for the model
-was shown to be relatively weak however the US is a relatively stagnant country
-when it comes to decreases in log rate mortality over time and testing on other countries
-is a must to get the full scope of the generalizability of this model.
 
 ## References
 
