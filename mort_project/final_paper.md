@@ -4,7 +4,7 @@
 ## Modeling Mortality
 
 Modeling human mortality has had a long history of attempts and revisions
-since Gompertz first made his claim of human mortality patterns in the 1880s.
+since Gompertz first made his claim of human mortality patterns in the 1880s[1].
 The ability to accurately model and describe rates of mortality can have
 numerous effects on how social institutions and policies can be structured
 in order to meet the needs of its populations. For example knowing the age
@@ -15,11 +15,11 @@ drivers of mortality.
 
 Another aspect of mortality that is often of concern is the future rates
 and how they differ from the past. Over the past century there has been
-dramatic declines in mortality across all locations and ages. While that
+dramatic declines in mortality across all locations and ages[1]. While that
 progress has stagnated to some degree we still see dramatic decreases in
 mortality among developing countries where medical infrastructure is
 expanding and improving. As this happens we would expect there to be a
-direct effects on the population, production and needs of a society.
+direct effects on the population, production, and the needs of a society.
 
 ## History of Descriptive Models
 
@@ -27,7 +27,7 @@ Descriptive models of mortality have an inherent age structure to them
 that allow for a simple descriptive explanation of how death effects
 individuals across their life-span. Gompertz first claim about human
 mortality was that there is a linear increase in log rate mortality
-as one aged. This model follows the form:  
+as one aged[1,3]. This model follows the form:  
 $$
 ln(m(x))=ax+b
 $$
@@ -50,8 +50,8 @@ mortality have allowed for demographic analysis.
 
 ![0](/home/nmarquez/Documents/Classes/2016_Spatio-temporal_models/mort_project/tx_male_all.png ""){#id .class width=400 height=220px}\
 
-In order to capture this in 1983 Siler proposed a model to capture this switch
-in mortality patterns by decomposing rate of mortality into three terms, an
+In order to describe this phenomenon in 1983 Siler proposed a model to capture this switch
+in mortality patterns[3] by decomposing rate of mortality into three terms, an
 infant mortality term, a constant risk term and a senescence term. Siler had
 originally formulated the model in terms of a survivorship $l(x)$, that is the
 equation estimated the percentage of the population that would live to some age
@@ -71,7 +71,8 @@ $$
 S(x) = \frac{l(x+1)}{l(x)}
 $$
 
-if $S(x)$ is per person than
+if $S(x)$ is per person then it is true that
+
 $$
 S(x) = 1 - m(x)
 $$
@@ -95,7 +96,7 @@ fairly straightforward and interpretable model. Others have proposed more
 complex models in order to catch other nuances observed in mortality such as the
 higher than expected mortality rates for young adults however, as more
 terms have been added the generalizability of the model tends to suffer and the
-amount of data needed to fit the model greatly increases. Even so, models that
+amount of data needed to fit the model greatly increases[1,4]. Even so, models that
 solely focus on the age structure of mortality are ill suited at making
 projections, either into the future or geographically, and do not take into
 account how these relationships can effect the estimates of the parameters in
@@ -105,8 +106,8 @@ the model.
 
 These models all offer a descriptive frame work for mortality over age however
 they do not offer a good solution for mortality over time or across regions. In
-2000 Lee & Carter developed a model that is still this day widely used for
-forecasting mortality at the all cause and cause specific level. Abandoning the
+1992 Lee & Carter developed a model that is still this day widely used for
+forecasting mortality at the all cause and cause specific level[1,10]. Abandoning the
 traditional framework of looking at age patterns the model argues that better
 forecasts can be made by assuming that ages are largely independent in their
 level and only similar in their rate of change. In this model we estimate
@@ -140,7 +141,7 @@ follows $log(m_{x,t} - a_x)=USV^{\intercal}$ from which $b_x$ and $k_t$ can be
 obtained from $U[,1]$ and $V[,1]$ respectively. These values then can generate
 estimates for any in sample time point. In order to forecast Lee Carter states
 that the $k_t$ parameters can be forecasted forward using a forecasting method
-from the ARIMA family. In the paper they use a Random walk model that follows
+from the ARIMA family. In the paper they use a Random Walk model that follows
 the specification
 
 $$
@@ -151,21 +152,21 @@ $$
 $$
 
 This model produces sensible results in terms of short term forecasts and has
-performed well in datasets in the US from 1970 to 2005. Additionally, the Social
+performed well in datasets in the US from 1970 to 2005[1,10]. Additionally, the Social
 Security Administration and the US Census Bureau have reported using variants of
-the Lee Carter model for their projections and social security planning.
+the Lee Carter model for their projections and social security planning[1].
 
 While this model has preformed well when tested on US mortality data it
 has performed lackluster in other environments.
 Because of the lack of age structure, the model produces nonsensical results
 where adjacent age groups have differing and sometimes opposite rates of
-change log rate mortality. This is seldom a problem for sort term forecasting,
+change log rate mortality. This is seldom a problem for short term forecasting,
 such as 5 years, but with more long term forecasting creates patterns of
 mortality that does not resemble the standard age curve that Siler captured in
-his descriptive model. In 2006 Girosi and King wrote a response to the Lee-
-Carter model showing where the model works well and the many times that it does
-not and criticizing the approach for not pooling information across age and
-geography.
+his descriptive model. In 2006 Girosi and King wrote a response to the Lee-Carter
+model showing where the model works well, the many times that it does
+not, and criticizing the approach for not pooling information across age and
+geography[2].
 
 ## Modified GeoTemporal Siler
 
@@ -201,17 +202,17 @@ temporal = \beta \times time
 $$
 
 This component has the ability incorporate within it the effects of covariates
-the mark medical and technological innovations that effect mortality however
+relating to medical and technological innovations that effect mortality however
 we will simply use time in this exercise as a proxy for their effect on mortality.
 That is to say that we expect that as time passes mortality will decrease as
 innovations happen. The first two components will constitute what we will
 consider the deterministic skeleton. This is how we perceive that mortality
 is structured and how we believe it progresses over time independent of any
-observations. Observations that we do see will be centered off of this
+observations. Observations that we do see are assumed be centered around this
 deterministic skeleton with some error.
 
 The last component is the structured random error component which captures
-relatedness across three dimensions of error, age, space and time. In this way
+relatedness across three dimensions of error: age, space and time. In this way
 we acknowledge that the deterministic skeleton captures the baseline estimate
 and that our errors are not independent but rather are correlated across the
 dimensions that we have stated above. In order to capture the relatedness of
@@ -222,13 +223,13 @@ $$
 $$
 
 $\phi$ can either be thought of as a vector of random variables which follow the
-distribution as shown above or a 3-dimensional array for the dimensions
-location, age, and time which we show above for convenience of notation.
+distribution as shown above  on the right or a 3-dimensional array for the
+dimensions location, age, and time which we show above on the left for the
+convenience of notation.
 
-$Q$ acts as the precision matrix, which is the inverse of the variance-
-covariance matrix. This matrix
-is a square matrix of length equal to the product of the numbers of locations,
-ages, and times and is composed of three structured
+$Q$ acts as the precision matrix, which is the inverse of the variance-covariance
+matrix. This matrix is a square matrix of length equal to the product of the
+numbers of locations, ages, and times and is composed of three structured
 precision matrices for the dimensions of location, age, and time.
 These precision matrices can be combined for joint precision by using the Kronecker
 product as shown below.
@@ -398,16 +399,16 @@ The geographic error plot also shows that their is still some systematic bias to
 overestimate mortality in the Midwest states compared to states on the west
 coast.
 
-### Comparison to Lee Carter Model
+## Comparison to Lee Carter Model
 
-#### Model RMSE Results for Males
+### Model RMSE Results for Males
 | YEARS EVALUATED | SILER | LEE CARTER |
 |-----------------|-------|------------|
 | 2009-2011       | .1329 | .1470      |
 | 2013-2015       | .1822 | .1844      |
 
 
-#### Model RMSE Results for Females
+### Model RMSE Results for Females
 | YEARS EVALUATED | SILER | LEE CARTER |
 |-----------------|-------|------------|
 | 2009-2011       | .1629 | .1627      |
@@ -422,14 +423,14 @@ in mortality for males than for females. Both models performed worse for females
 than males indicating that there is more variation in females that is harder to
 capture with either model. Case and Deaton have highlighted in a recent study
 that within the United States there has been a reversal of mortality trends over
-time for middle age females in recent years that both models have struggled to
+time for middle age females in recent years[5] that, perhaps, both models have struggled to
 capture however this has not been tested in this analysis.
 
 ## Discussion
 
 In this analysis we presented an alternative model for forecasting mortality
-which uses a structured age format in is deterministic skeleton based of of the
-Sile model of mortality along with a temporal for development and structured
+which uses a structured age format in is deterministic skeleton based off of the
+Siler model of mortality along with a temporal for development and structured
 random effects to be able to pool data across regions and forecast mortality
 results for separate locations and ages. This model differed from other models
 in that it incorporates the age structure that is inherent in descriptive
@@ -466,15 +467,15 @@ swapped in as the age governing portion of the deterministic skeleton. For
 example replacing the parameters related to the Silder portion of the model with
 a functional form such as the Heligman-Pollard model or the the multi-exponential
 model, both of which are outlined in a review of mortality models and forecasting
-by Boothe and Tickle.
+by Boothe and Tickle[1,4].
 
 In addition to replacing the deterministic skeleton with a similar model for
 mortality which largely imposes our assumptions about how mortality operates
-over age, we could also use a more less structured model and allow the data to
+over age, we could also use a less structured model and allow the data to
 govern the shape of the base model. One way that this could be done is by the
 use of a spline model. Spline models have the advantage of being well studied
 outside of the context of demographic modeling while still having a history of
-being used in mortality modeling as well. Both Currie and Shyamal-kumar outline
+being used in mortality modeling as well. Both Currie and Shyamalkumar[7,8] outline
 how they have used P-splines and cubic splines respectively in order to make
 estimates for mortality with Currie detailing methods for how to make
 projections. One advantage of using a spline model is that formulations exist
@@ -521,13 +522,13 @@ as well.
 
 To highlight this we will describe three hypothetical parameters that may be
 included in the model, what including them means for our estimates, and how their
-inclusion can be used as a diagnostic for the model. Each of these vectors of
+inclusion can be used as a diagnostic tool for the model. Each of these vectors of
 parameters will be described as marginal effects, as they pertain to the effect
 of correlation across a single dimension and can be conceptualized as the
 partial derivative with respect to that dimension. In addition each marginal
 effect will have the same covariance structure as the corresponding precision
 matrix in the parameter $\phi$. That is to say that the marginal time, age, and
-location parameters will have a covariance structure of AR, AR and CAR
+location parameters will have a covariance structure of AR, AR, and CAR
 respectively.
 
 The first marginal effect we will examine is the age marginal effect. This is
@@ -546,7 +547,7 @@ marginal effect on age. Rather than acting as an indicator of the goodness of
 fit for the deterministic skeleton the time marginal effect acts as a safe guard
 to shocks that effect a single year across all geographies. Perhaps the most
 exemplary example of this kind of temporal shock in the US is the flu epidemic
-that occurred in 1918. What is often considered as one of the deadliest natural
+that occurred in 1918[6]. What is often considered as one of the deadliest natural
 disasters in recent human history, the 1918 influenza epidemic caused life
 expectancy to drop in males from 49.6 to 36.6 years of life and 54.3 and 42.2
 years of life in females. While the time series that we covered in this analysis
@@ -556,7 +557,7 @@ that differentially effects the time point just proceeding it.
 
 A marginal geographic effect would offer the same kind of protection to
 geographic outliers in our model. This has been shown to be true for Southern
-states in particular and the combined effect in $\phi$ may miss the marginal
+states in particular[9] and the combined effect in $\phi$ may miss the marginal
 geographic effects and at the very least attribute these effects to combined
 spatial-temporal-age effects.
 
@@ -577,29 +578,32 @@ when modeling mortality and pooling data across geographies and time.
 [1] Booth, Tickle (2008). Mortality Modeling and Forecasting. A Review of
 Methods.
 
-[2] Girosi, F., King, G.  (2006).  Demographic  Forecasting.  Cambridge
-University  Press,  Cambridge.
+[2] Girosi, F., King, G. (2006). Demographic Forecasting. Cambridge
+University Press, Cambridge.
 
 [3] Siler, W. (1983). Parameters of mortality in human populations with widely
 varying life spans. Statistics in Medicine, 2, 373-380.
-Lee,R.D., Carter, L.R.  (1992).  Modelling  and  forecasting  U.S.  mortality.
+Lee,R.D., Carter, L.R. (1992). Modeling and Forecasting U.S. Mortality.
 Journal of the American Statistical Association, 87(419), 659-671.
 
-[4] Heligman, L.,  Pollard, J.H.  (1980).  The  age  pattern  of  mortality.
-Journal  of  the  Institute of Actuaries, 107(1, No 434), 49-80
+[4] Heligman, L.,  Pollard, J.H. (1980). The age pattern of mortality.
+Journal of the Institute of Actuaries, 107(1, No 434), 49-80
 
 [5] Case, A., Deaton, A. (2015). Rising morbidity and mortality in midlife among
 white non-Hispanic Americans in the 21st century. PNAS 112(No 49), 15078–15083.
 
-[6] Noymer, A. Garenne, M. (2000) The 1918 Influenza Epidemic’s Effects on Sex
+[6] Noymer, A. Garenne, M. (2000). The 1918 Influenza Epidemic’s Effects on Sex
 Differentials in Mortality in the United States. Population and Development
 Review 26(3):565–581.
 
-[7] Shyamal-Kumar, N.D. (2006) Analysis of Mortality Data using Smoothing Spline
+[7] Shyamal-Kumar, N.D. (2006). Analysis of Mortality Data using Smoothing Spline
 Poisson Regression. Actuarial Research Clearing House.
 
-[8] Currie I. D., Durban, M., Eilers, P. H. C. (2004) Smoothing and Forecasting
+[8] Currie I. D., Durban, M., Eilers, P. H. C. (2004). Smoothing and Forecasting
 Mortality Rates. Statistical Modeling, 4, 279-298.
 
 [9] State-Specific Healthy Life Expectancy at Age 65 Years — United States,
 2007–2009. CDC Weekly Report. July 19, 2013 / 62(28);561-566.
+
+[10] Lee, R. Carter, L. (1992). Modeling and Forecasting the Time Series of U.S.
+Mortality.  Journal of the American Statistical Association Vol. 87, No. 419.
