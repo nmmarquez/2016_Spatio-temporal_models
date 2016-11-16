@@ -221,7 +221,7 @@ $$
 \phi_{l,a,t} \sim \mathcal{N}(0, Q^{-1})
 $$
 
-$phi$ can either be thought of as a vector of random variables which follow the
+$\phi$ can either be thought of as a vector of random variables which follow the
 distribution as shown above or a 3-dimensional array for the dimensions
 location, age, and time which we show above for convenience of notation.
 
@@ -420,10 +420,10 @@ of RMSE for both sets of years evaluated for males while the reverse is true for
 females. This result indicates that the Siler model is more robust to the shifts
 in mortality for males than for females. Both models performed worse for females
 than males indicating that there is more variation in females that is harder to
-capture with either model. (cite study here) has indicated that within the United
-States there has been a slow down in the decrease of mortality over time for
-middle age females in recent years that both models have struggled to capture
-however this has not been tested in this analysis.
+capture with either model. Case and Deaton have highlighted in a recent study
+that within the United States there has been a reversal of mortality trends over
+time for middle age females in recent years that both models have struggled to
+capture however this has not been tested in this analysis.
 
 ## Discussion
 
@@ -443,8 +443,134 @@ their critique of the model.
 In addition to addressing the theoretical concerns that are often addressed when
 modeling mortality this model was shown to produce comparable results in terms
 of RMSE when compared to the Lee-Carter model, a model that is used heavily in
-demographic forecasting for mortality.
+demographic forecasting for mortality. In addition the model retains sensible
+patterns of mortality for ages even in years forecasted far into the future
+unlike the Lee Carter model.
 
+In this test case scenario using data from the US our Siler model performed at
+least as well as the Lee Carter in the demographic break downs that we analyzed.
+As is the model could be considered for use in other endeavors of demographic
+forecasting given that it performs well in an out of sample validity test. That
+being said the model could be improved upon.
+
+### Alterations to the Deterministic Skeleton
+
+The backbone of the modified Siler model is in the deterministic skeleton which
+closely resembles the original Siler model with an added component for
+temporal technological advancement. The advantage of this model is that it
+constrains estimates to be centered around a pattern of mortality relating to
+age that we have empirically observed to be true. This being said there have
+been several used in the field of descriptive demography which could have
+been use as the basis for our model. Testing how different models could be
+swapped in as the age governing portion of the deterministic skeleton. For
+example replacing the parameters related to the Silder portion of the model with
+a functional form such as the Heligman-Pollard model or the the multi-exponential
+model, both of which are outlined in a review of mortality models and forecasting
+by Boothe and Tickle.
+
+In addition to replacing the deterministic skeleton with a similar model for
+mortality which largely imposes our assumptions about how mortality operates
+over age, we could also use a more less structured model and allow the data to
+govern the shape of the base model. One way that this could be done is by the
+use of a spline model. Spline models have the advantage of being well studied
+outside of the context of demographic modeling while still having a history of
+being used in mortality modeling as well. Both Currie and Shyamal-kumar outline
+how they have used P-splines and cubic splines respectively in order to make
+estimates for mortality with Currie detailing methods for how to make
+projections. One advantage of using a spline model is that formulations exist
+which reduce the amount of correlation among parameters such as a basis spline.
+This is a peril that most of the descriptive models face as outliers have an
+extreme effect on parameters due to the high correlated nature of those
+parameters.
+
+One other component of the model that may be changed that is not directly
+related to the deterministic skeleton is the likelihood evaluation portion of
+the model. Currently the likelihood of the model is being assessed in log rate
+space with a normal distribution centered around our estimate. The data
+generation process however is one that is observed in counts and thus may not
+reflect a normal distribution in log space. Rather than evaluate the models
+likelihood in this fashion
+
+$$
+log(m_{lat}) \sim \mathcal{N}(\mu_{lat}, \sigma_{obs})
+$$
+
+we could alternatively evaluate the models counts using a Poisson distribution.
+
+$$
+deaths_{lat} \sim Poiss(\mu_{lat} * pop_{lat})
+$$
+
+where $pop_{lat}$ is the population for a particular observed location, age, and
+time, $\mu_{lat}$ is our predicted rate from the model and $deaths_{lat}$ is the
+actual observed counts of death in that demographic. While this model was not
+feasible for our case because of the size of units of our location, with smaller
+areas of estimation, such as at the county or zip code level, this model could
+act as an alternative.
+
+### Alterations to the Random Effects Structure
+
+Another area of improvement comes from the structure of the random effects. As a
+recap each location, age, year for a modeled sex had its own random effect which
+was correlated in each dimension by using either a CAR or AR precision structure
+from which the Kronecker product was taken to get the joint change across these
+demographic dimensions which was captured in our parameter $\phi$. This
+structure captures the joint correlation in the residuals of these dimensions
+however it can be argued that each of these dimensions has an independent effect
+as well.
+
+To highlight this we will describe three hypothetical parameters that may be
+included in the model, what including them means for our estimates, and how their
+inclusion can be used as a diagnostic for the model. Each of these vectors of
+parameters will be described as marginal effects, as they pertain to the effect
+of correlation across a single dimension and can be conceptualized as the
+partial derivative with respect to that dimension. In addition each marginal
+effect will have the same covariance structure as the corresponding precision
+matrix in the parameter $\phi$. That is to say that the marginal time, age, and
+location parameters will have a covariance structure of AR, AR and CAR
+respectively.
+
+The first marginal effect we will examine is the age marginal effect. This is
+potentially the most interesting because our model is strongly based on defining
+a sensible age structure. Nonetheless, the inclusion of a marginal age effect
+would reduce the variation in age that is placed on the joint parameter $\phi$
+while individually highlighting the amount of variation explained simply by
+changes in age. This effect has the potential of acting as a diagnostic function
+for the age structure of our deterministic skeleton because we would expect
+that as the skeleton more accurately describes the general pattern of mortality
+across age that the amount of variability explained by the age marginal effect
+would decrease.
+
+A marginal effect on time serves a different theoretical purpose than the
+marginal effect on age. Rather than acting as an indicator of the goodness of
+fit for the deterministic skeleton the time marginal effect acts as a safe guard
+to shocks that effect a single year across all geographies. Perhaps the most
+exemplary example of this kind of temporal shock in the US is the flu epidemic
+that occurred in 1918. What is often considered as one of the deadliest natural
+disasters in recent human history, the 1918 influenza epidemic caused life
+expectancy to drop in males from 49.6 to 36.6 years of life and 54.3 and 42.2
+years of life in females. While the time series that we covered in this analysis
+did not cover any mortality epidemics of the magnitude of this incident the
+effects that the 2008 financial fallout had on mortality rates could be a factor
+that differentially effects the time point just proceeding it.
+
+A marginal geographic effect would offer the same kind of protection to
+geographic outliers in our model. This has been shown to be true for Southern
+states in particular and the combined effect in $\phi$ may miss the marginal
+geographic effects and at the very least attribute these effects to combined
+spatial-temporal-age effects.
+
+## Conclusion  
+
+In this paper we present an alternative method for forecasting all cause
+mortality by combing a traditionally descriptive model for mortality, a
+modification of the Silder model, with a temporal component for medical
+and technological advancement as well as a correlated random effects structure
+that takes into account relatedness over multiple dimensions. While this model
+is not meant to take the place of any existing models that exist for forecasting
+mortality it has been shown in this analysis to provide comparable results to
+well established models, i.e. the Lee-Carter model, and should be considered
+when modeling mortality and pooling data across geographies and time.
 
 ## References
 
@@ -454,10 +580,26 @@ Methods.
 [2] Girosi, F., King, G.  (2006).  Demographic  Forecasting.  Cambridge
 University  Press,  Cambridge.
 
-Siler, W. (1983). Parameters of mortality in human populations with widely
+[3] Siler, W. (1983). Parameters of mortality in human populations with widely
 varying life spans. Statistics in Medicine, 2, 373-380.
 Lee,R.D., Carter, L.R.  (1992).  Modelling  and  forecasting  U.S.  mortality.
 Journal of the American Statistical Association, 87(419), 659-671.
 
-Heligman, L.,  Pollard, J.H.  (1980).  The  age  pattern  of  mortality.
+[4] Heligman, L.,  Pollard, J.H.  (1980).  The  age  pattern  of  mortality.
 Journal  of  the  Institute of Actuaries, 107(1, No 434), 49-80
+
+[5] Case, A., Deaton, A. (2015). Rising morbidity and mortality in midlife among
+white non-Hispanic Americans in the 21st century. PNAS 112(No 49), 15078–15083.
+
+[6] Noymer, A. Garenne, M. (2000) The 1918 Influenza Epidemic’s Effects on Sex
+Differentials in Mortality in the United States. Population and Development
+Review 26(3):565–581.
+
+[7] Shyamal-Kumar, N.D. (2006) Analysis of Mortality Data using Smoothing Spline
+Poisson Regression. Actuarial Research Clearing House.
+
+[8] Currie I. D., Durban, M., Eilers, P. H. C. (2004) Smoothing and Forecasting
+Mortality Rates. Statistical Modeling, 4, 279-298.
+
+[9] State-Specific Healthy Life Expectancy at Age 65 Years — United States,
+2007–2009. CDC Weekly Report. July 19, 2013 / 62(28);561-566.
